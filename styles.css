@@ -592,36 +592,52 @@ body {
         max-width: 300px;
     }
 
-    /* Results Screen Mobile - EXACT SAME LAYOUT AS DESKTOP */
+    /* Results Screen Mobile - STACK EVERYTHING VERTICALLY */
     .results-screen {
         padding: 1.5rem 1rem;
-        /* All other properties inherit from desktop */
     }
     
     .results-screen.active {
         display: flex;
     }
 
-    /* Only adjust font sizes, keep all layout properties same as desktop */
+    /* Header - stack vertically on mobile */
+    .result-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
     .results-screen h2 {
         font-size: 1.4rem;
+        white-space: normal;
     }
 
     .result-time {
         font-size: 2.8rem;
+        white-space: normal;
     }
 
     .result-message {
         font-size: 1.1rem;
+        margin: 0 0 1rem 0;
     }
 
     .rounds-survived {
         font-size: 1rem;
+        margin: 0 0 1.5rem 0;
     }
     
-    /* Button Group - same as desktop, just adjust button size */
+    /* Leaderboard Container */
+    #leaderboardContainer {
+        margin: 0 0 1.5rem 0;
+        max-width: 100%;
+    }
+    
+    /* Button Group - full width on mobile */
     .button-group {
         max-width: 100%;
+        width: 100%;
     }
 
     .button-group .btn {
