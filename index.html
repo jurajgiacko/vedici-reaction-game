@@ -208,8 +208,16 @@
             gameState = 'idle';
             hideElement('gameArea');
             
-            // Calculate average
-            avgReactionTime = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
+            // Calculate average - check if we have reaction times
+            if (reactionTimes.length === 0) {
+                console.error('No reaction times recorded!');
+                avgReactionTime = 0;
+            } else {
+                avgReactionTime = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
+            }
+            
+            console.log('Reaction times:', reactionTimes);
+            console.log('Average reaction time:', avgReactionTime);
             
             // Calculate rounds survived (based on reaction time)
             let roundsSurvived;
@@ -227,8 +235,22 @@
                 roundsSurvived = "5";
             }
             
-            document.getElementById('averageTime').textContent = `${avgReactionTime}ms`;
-            document.getElementById('roundsSurvived').textContent = `You'd survive ${roundsSurvived} rounds in VEDICI mode`;
+            // Update UI elements
+            const averageTimeElement = document.getElementById('averageTime');
+            const roundsSurvivedElement = document.getElementById('roundsSurvived');
+            
+            if (averageTimeElement) {
+                averageTimeElement.textContent = `${avgReactionTime}ms`;
+                console.log('Set averageTime element to:', avgReactionTime + 'ms');
+            } else {
+                console.error('averageTime element not found!');
+            }
+            
+            if (roundsSurvivedElement) {
+                roundsSurvivedElement.textContent = `You'd survive ${roundsSurvived} rounds in VEDICI mode`;
+            } else {
+                console.error('roundsSurvived element not found!');
+            }
             
             // Automatically open email modal to save score
             setTimeout(() => {
@@ -248,6 +270,18 @@
             closeModal();
             const resultsScreen = document.getElementById('resultsScreen');
             resultsScreen.style.display = 'flex';
+            
+            // Make sure average time is visible
+            const h2 = resultsScreen.querySelector('h2');
+            const time = resultsScreen.querySelector('.result-time');
+            const message = resultsScreen.querySelector('.result-message');
+            const rounds = resultsScreen.querySelector('.rounds-survived');
+            
+            if (h2) h2.style.display = 'block';
+            if (time) time.style.display = 'block';
+            if (message) message.style.display = 'block';
+            if (rounds) rounds.style.display = 'block';
+            
             loadLeaderboard('leaderboardContainer');
         }
 
