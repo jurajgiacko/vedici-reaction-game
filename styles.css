@@ -274,6 +274,14 @@ body {
     flex-wrap: wrap;
 }
 
+/* On mobile, force column layout */
+@media (max-width: 768px) {
+    .result-header {
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+    }
+}
+
 .results-screen h2 {
     font-size: 2rem;
     font-weight: 800;
@@ -604,7 +612,7 @@ body {
         display: flex !important;
     }
 
-    /* Header - FORCE vertical stack on mobile */
+    /* Header - FORCE vertical stack on mobile - OVERRIDE DESKTOP */
     .result-header {
         flex-direction: column !important;
         align-items: center !important;
@@ -612,22 +620,25 @@ body {
         gap: 0.75rem !important;
         margin-bottom: 1rem !important;
         width: 100% !important;
+        flex-wrap: nowrap !important;
     }
 
     .results-screen h2 {
-        font-size: 1.3rem;
+        font-size: 1.3rem !important;
         white-space: normal !important;
         text-align: center !important;
         width: 100% !important;
         margin: 0 !important;
+        display: block !important;
     }
 
     .result-time {
-        font-size: 2.5rem;
+        font-size: 2.5rem !important;
         white-space: normal !important;
         text-align: center !important;
         width: 100% !important;
         margin: 0 !important;
+        display: block !important;
     }
 
     .result-message {
