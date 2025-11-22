@@ -294,11 +294,20 @@
             border-radius: 4px;
             margin: 1rem 0;
             text-align: center;
+            transition: border-color 0.3s ease;
         }
 
         .name-input:focus {
             outline: none;
             border-color: #d4af37;
+        }
+
+        .name-input:valid:not(:placeholder-shown) {
+            border-color: #4caf50;
+        }
+
+        .name-input:invalid:not(:placeholder-shown) {
+            border-color: #ff3333;
         }
 
         /* Round Indicator */
@@ -433,10 +442,11 @@
         <!-- Email Input Modal -->
         <div class="modal" id="nameModal">
             <div class="modal-content">
-                <h3>ENTER YOUR EMAIL</h3>
-                <input type="email" class="name-input" id="playerName" placeholder="your.email@example.com" maxlength="100">
-                <button class="btn" id="submitButton" onclick="submitScore()">SUBMIT</button>
-                <button class="btn btn-secondary" onclick="closeModal()">CANCEL</button>
+                <h3>SAVE YOUR SCORE</h3>
+                <p style="color: #888; margin-bottom: 1rem; font-size: 0.9rem;">Enter your email to save your result to the leaderboard</p>
+                <input type="email" class="name-input" id="playerName" placeholder="your.email@example.com" maxlength="100" required autocomplete="email">
+                <button class="btn" id="submitButton" onclick="submitScore()">SAVE SCORE</button>
+                <button class="btn btn-secondary" onclick="skipSave()">SKIP</button>
                 <div class="error-message" id="errorMessage"></div>
             </div>
         </div>
@@ -578,37 +588,70 @@
             document.getElementById('averageTime').textContent = `${avgReactionTime}ms`;
             document.getElementById('roundsSurvived').textContent = `You'd survive ${roundsSurvived} rounds in VEDICI mode`;
             
-            showElement('resultsScreen');
-            loadLeaderboard('leaderboardContainer');
+            // Automatically open email modal to save score
+            setTimeout(() => {
+                showElement('nameModal');
+                document.getElementById('playerName').focus();
+            }, 500);
         }
 
-        // Save Score
+        // Save Score (called from button if needed)
         function saveAndShowLeaderboard() {
             showElement('nameModal');
             document.getElementById('playerName').focus();
         }
 
+        // Skip saving score
+        function skipSave() {
+            closeModal();
+            showElement('resultsScreen');
+            loadLeaderboard('leaderboardContainer');
+        }
+
         // Submit Score to Firebase
         async function submitScore() {
-            const playerEmail = document.getElementById('playerName').value.trim();
+            const emailInput = document.getElementById('playerName');
+            const playerEmail = emailInput.value.trim();
             const errorElement = document.getElementById('errorMessage');
             const submitButton = document.getElementById('submitButton');
             const originalButtonText = submitButton.textContent;
             
-            if (!playerEmail) {
-                errorElement.textContent = 'Please enter your email address';
+            // Clear previous errors
+            errorElement.textContent = '';
+            emailInput.style.border = '2px solid #333';
+            
+            // HTML5 validation check
+            if (!emailInput.checkValidity()) {
+                emailInput.style.border = '2px solid #ff3333';
+                if (emailInput.validity.valueMissing) {
+                    errorElement.textContent = 'Please enter your email address';
+                } else if (emailInput.validity.typeMismatch) {
+                    errorElement.textContent = 'Please enter a valid email address (e.g., name@example.com)';
+                }
+                emailInput.reportValidity();
                 return;
             }
             
-            // Email validation
+            if (!playerEmail) {
+                errorElement.textContent = 'Please enter your email address';
+                emailInput.style.border = '2px solid #ff3333';
+                emailInput.focus();
+                return;
+            }
+            
+            // Additional email validation (more strict)
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(playerEmail)) {
                 errorElement.textContent = 'Please enter a valid email address';
+                emailInput.style.border = '2px solid #ff3333';
+                emailInput.focus();
                 return;
             }
             
             if (playerEmail.length > 100) {
                 errorElement.textContent = 'Email too long (max 100 characters)';
+                emailInput.style.border = '2px solid #ff3333';
+                emailInput.focus();
                 return;
             }
             
@@ -634,6 +677,7 @@
                 
                 console.log('Score saved successfully');
                 closeModal();
+                showElement('resultsScreen');
                 await loadLeaderboard('leaderboardContainer');
                 
             } catch (error) {
@@ -757,11 +801,43 @@
             `;
         }
 
-        // Keyboard Support for Name Input
+        // Keyboard Support for Email Input
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('playerName').addEventListener('keypress', (e) => {
+            const emailInput = document.getElementById('playerName');
+            
+            // Submit on Enter key
+            emailInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     submitScore();
+                }
+            });
+            
+            // Real-time validation feedback
+            emailInput.addEventListener('input', (e) => {
+                const errorElement = document.getElementById('errorMessage');
+                const input = e.target;
+                
+                if (input.value.trim() === '') {
+                    input.style.border = '2px solid #333';
+                    errorElement.textContent = '';
+                } else if (input.checkValidity()) {
+                    input.style.border = '2px solid #d4af37';
+                    errorElement.textContent = '';
+                } else {
+                    input.style.border = '2px solid #ff3333';
+                }
+            });
+            
+            // Validate on blur
+            emailInput.addEventListener('blur', (e) => {
+                const input = e.target;
+                const errorElement = document.getElementById('errorMessage');
+                
+                if (input.value.trim() && !input.checkValidity()) {
+                    if (input.validity.typeMismatch) {
+                        errorElement.textContent = 'Please enter a valid email address';
+                    }
                 }
             });
         });
