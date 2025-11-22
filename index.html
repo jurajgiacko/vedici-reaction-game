@@ -356,6 +356,18 @@
                 closeModal();
                 const resultsScreen = document.getElementById('resultsScreen');
                 resultsScreen.style.display = 'flex';
+                
+                // Make sure all result elements are visible
+                const h2 = resultsScreen.querySelector('h2');
+                const time = resultsScreen.querySelector('.result-time');
+                const message = resultsScreen.querySelector('.result-message');
+                const rounds = resultsScreen.querySelector('.rounds-survived');
+                
+                if (h2) h2.style.display = 'block';
+                if (time) time.style.display = 'block';
+                if (message) message.style.display = 'block';
+                if (rounds) rounds.style.display = 'block';
+                
                 await loadLeaderboard('leaderboardContainer');
                 
             } catch (error) {
