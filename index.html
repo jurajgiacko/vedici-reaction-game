@@ -2,770 +2,683 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VEDICI Focus Challenge | Test Your Reaction Speed</title>
     <meta name="description" content="Measure your reaction time and discover your edge. Play the VEDICI Focus Challenge.">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
     <style>
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #000000;
             color: #ffffff;
-            overflow-x: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .logo {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            color: #d4af37;
-            z-index: 1000;
-            text-transform: uppercase;
-        }
-
-        .container {
-            min-height: 100vh;
+        /* Main Container */
+        .game-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            max-height: 800px;
+            position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            position: relative;
+            touch-action: manipulation;
+        }
+
+        /* Logo */
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #d4af37;
+            text-decoration: none;
+            z-index: 10;
         }
 
         /* Start Screen */
         .start-screen {
             text-align: center;
-            max-width: 600px;
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 1s ease;
         }
 
-        .hero-title {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #d4af37;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            line-height: 1.2;
+        .start-screen h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #d4af37 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
         }
 
-        .hero-tagline {
+        .tagline {
             font-size: 1.2rem;
-            color: #cccccc;
-            margin-bottom: 40px;
-            font-weight: 300;
-            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 3rem;
+            letter-spacing: 0.5px;
         }
 
-        .instructions {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 30px;
-            border-radius: 2px;
-            margin-bottom: 40px;
-            text-align: left;
-        }
-
-        .instructions h3 {
-            color: #d4af37;
-            margin-bottom: 20px;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-
-        .instructions ol {
-            list-style-position: inside;
-            color: #cccccc;
-            line-height: 2;
-        }
-
-        .instructions li {
-            margin-bottom: 10px;
-        }
-
+        /* Buttons */
         .btn {
-            background: #d4af37;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
             color: #000000;
             border: none;
-            padding: 18px 50px;
-            font-size: 1rem;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
             cursor: pointer;
+            border-radius: 4px;
             transition: all 0.3s ease;
-            border-radius: 2px;
-            position: relative;
-            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0.5rem;
         }
 
         .btn:hover {
-            background: #f0c847;
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
         }
 
         .btn-secondary {
             background: transparent;
             border: 2px solid #d4af37;
             color: #d4af37;
-            padding: 16px 48px;
         }
 
         .btn-secondary:hover {
-            background: rgba(212, 175, 55, 0.1);
+            background: #d4af37;
+            color: #000000;
         }
 
-        /* Game Screen */
-        .game-screen {
+        /* Game Area */
+        .game-area {
             width: 100%;
-            height: 100vh;
-            display: flex;
+            height: 100%;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: background-color 0.1s ease;
             position: relative;
         }
 
-        .game-screen.waiting {
-            background: #000000;
+        .game-area.waiting {
+            background: #1a1a1a;
+            animation: pulse 2s infinite;
         }
 
-        .game-screen.active {
+        .game-area.ready {
             background: #d4af37;
-            cursor: pointer;
+            animation: glow 0.5s ease;
         }
 
-        .game-screen.too-early {
-            background: #8b0000;
+        .game-area.early {
+            background: #ff3333;
         }
 
-        .game-info {
+        .instruction {
             font-size: 1.5rem;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .game-screen.waiting .game-info {
-            color: #ffffff;
-        }
-
-        .game-screen.active .game-info {
-            color: #000000;
-            font-weight: 700;
-        }
-
-        .game-screen.too-early .game-info {
-            color: #ffffff;
-        }
-
-        .round-counter {
-            position: absolute;
-            top: 80px;
-            right: 30px;
-            font-size: 1rem;
-            color: #d4af37;
-            letter-spacing: 2px;
-            text-transform: uppercase;
             font-weight: 600;
-        }
-
-        /* Glow animation */
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 0.3;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.6;
-                transform: scale(1.05);
-            }
-        }
-
-        .glow-circle {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 2px solid #d4af37;
-            opacity: 0.3;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .glow-circle:nth-child(2) {
-            animation-delay: 0.5s;
-            width: 400px;
-            height: 400px;
-        }
-
-        .glow-circle:nth-child(3) {
-            animation-delay: 1s;
-            width: 500px;
-            height: 500px;
+            text-align: center;
+            pointer-events: none;
         }
 
         /* Results Screen */
         .results-screen {
+            display: none;
             text-align: center;
-            max-width: 700px;
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 1s ease;
         }
 
-        .results-title {
-            font-size: 2.5rem;
+        .result-time {
+            font-size: 4rem;
+            font-weight: 800;
             color: #d4af37;
-            margin-bottom: 40px;
-            font-weight: 700;
-            letter-spacing: 2px;
+            margin: 1rem 0;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+        .result-message {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+            color: #ffffff;
         }
 
-        .stat-card {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 30px 20px;
-            border-radius: 2px;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: #999999;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            color: #d4af37;
-            font-weight: 700;
-        }
-
-        .stat-unit {
-            font-size: 1rem;
-            color: #cccccc;
-            margin-left: 5px;
-        }
-
-        .performance-message {
-            font-size: 1.3rem;
-            color: #cccccc;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-
-        .performance-message strong {
-            color: #d4af37;
-        }
-
-        .cta-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .cta-link {
-            color: #d4af37;
-            text-decoration: none;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .cta-link:hover {
-            color: #f0c847;
+        .rounds-survived {
+            font-size: 1.2rem;
+            color: #888;
+            margin: 2rem 0;
         }
 
         /* Leaderboard */
         .leaderboard {
-            margin-top: 50px;
-            width: 100%;
-            max-width: 600px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 500px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #333;
         }
 
-        .leaderboard-title {
-            font-size: 1.2rem;
+        .leaderboard h2 {
             color: #d4af37;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
         }
 
-        .leaderboard-list {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
+        .leaderboard ol {
+            list-style: none;
+            padding: 0;
         }
 
-        .leaderboard-item {
+        .leaderboard li {
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            background: #0a0a0a;
+            border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-        }
-
-        .leaderboard-item:last-child {
-            border-bottom: none;
-        }
-
-        .leaderboard-item.current {
-            background: rgba(212, 175, 55, 0.1);
-        }
-
-        .leaderboard-rank {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #d4af37;
-            min-width: 40px;
-        }
-
-        .leaderboard-name {
-            flex: 1;
-            color: #cccccc;
-            font-size: 1rem;
-        }
-
-        .leaderboard-score {
             font-size: 1.1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .leaderboard li:hover {
+            transform: translateX(5px);
+        }
+
+        .leaderboard li:nth-child(1) {
+            background: linear-gradient(90deg, #d4af37, #b8941f);
+            color: #000;
+            font-weight: 700;
+        }
+
+        .leaderboard li:nth-child(2) {
+            background: linear-gradient(90deg, #c0c0c0, #a0a0a0);
+            color: #000;
+        }
+
+        .leaderboard li:nth-child(3) {
+            background: linear-gradient(90deg, #cd7f32, #b87333);
+            color: #000;
+        }
+
+        .rank {
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+
+        .player-name {
+            flex: 1;
+            text-align: left;
+            margin-right: 1rem;
+        }
+
+        .player-score {
+            font-weight: 600;
+            color: #d4af37;
+        }
+
+        .leaderboard li:nth-child(1) .player-score,
+        .leaderboard li:nth-child(2) .player-score,
+        .leaderboard li:nth-child(3) .player-score {
+            color: #000;
+        }
+
+        /* Name Input Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid #d4af37;
+        }
+
+        .modal h3 {
+            color: #d4af37;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            background: #000;
+            border: 2px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        /* Round Indicator */
+        .round-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2rem;
             color: #d4af37;
             font-weight: 600;
         }
 
         /* Animations */
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive */
+        @keyframes pulse {
+            0%, 100% { background: #1a1a1a; }
+            50% { background: #2a2a2a; }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: inset 0 0 0 0 rgba(212, 175, 55, 0.5); }
+            100% { box-shadow: inset 0 0 50px 0 rgba(212, 175, 55, 0.2); }
+        }
+
+        /* Mobile Optimization */
         @media (max-width: 768px) {
-            .hero-title {
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .start-screen h1 {
                 font-size: 2rem;
             }
 
-            .hero-tagline {
+            .tagline {
                 font-size: 1rem;
             }
 
-            .instructions {
-                padding: 20px;
+            .btn {
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
             }
 
-            .results-title {
-                font-size: 2rem;
+            .result-time {
+                font-size: 3rem;
             }
 
-            .stat-value {
-                font-size: 2rem;
+            .leaderboard {
+                padding: 1rem;
+                margin: 1rem;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .logo {
-                font-size: 18px;
-                top: 15px;
-                left: 15px;
-            }
-
-            .round-counter {
-                top: 60px;
-                right: 15px;
+            .leaderboard li {
                 font-size: 0.9rem;
+                padding: 0.6rem;
             }
         }
 
-        .hidden {
-            display: none !important;
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            border-top-color: #d4af37;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error Message */
+        .error-message {
+            color: #ff3333;
+            margin-top: 1rem;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-    <div class="logo">VEDICI</div>
+    <!-- Logo/Brand -->
+    <a href="https://vedici.gg" class="logo" target="_blank">VEDICI</a>
 
-    <!-- Start Screen -->
-    <div id="startScreen" class="container start-screen">
-        <h1 class="hero-title">FOCUS CHALLENGE</h1>
-        <p class="hero-tagline">Test your focus. Join the Golden Edge.</p>
-
-        <div class="instructions">
-            <h3>How It Works</h3>
-            <ol>
-                <li>Wait for the screen to turn <strong style="color: #d4af37;">GOLD</strong></li>
-                <li>Click or tap as fast as you can</li>
-                <li>Complete 5 rounds</li>
-                <li>Discover your reaction speed</li>
-            </ol>
+    <div class="game-container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1>VEDICI FOCUS CHALLENGE</h1>
+            <p class="tagline">Test your focus. Join the Golden Edge.</p>
+            <button class="btn" onclick="startGame()">START CHALLENGE</button>
+            <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
         </div>
 
-        <div style="margin-bottom: 30px;">
-            <input type="text" id="playerName" placeholder="Enter your name"
-                   style="width: 100%; max-width: 400px; padding: 15px; font-size: 1rem;
-                          background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.3);
-                          color: #ffffff; border-radius: 2px; text-align: center; font-family: inherit;"
-                   maxlength="20" required>
+        <!-- Game Area -->
+        <div class="game-area" id="gameArea" onclick="handleClick()">
+            <div class="round-indicator" id="roundIndicator"></div>
+            <div class="instruction" id="instruction">Wait for GOLD...</div>
         </div>
 
-        <button class="btn" onclick="startGame()">BEGIN TEST</button>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="gameScreen" class="game-screen waiting hidden">
-        <div class="round-counter" id="roundCounter">ROUND 1/5</div>
-
-        <div class="glow-circle"></div>
-        <div class="glow-circle"></div>
-        <div class="glow-circle"></div>
-
-        <div class="game-info" id="gameInfo">
-            FOCUS... WAIT FOR GOLD
-        </div>
-    </div>
-
-    <!-- Results Screen -->
-    <div id="resultsScreen" class="container results-screen hidden">
-        <h2 class="results-title">PERFORMANCE ANALYSIS</h2>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Average Time</div>
-                <div>
-                    <span class="stat-value" id="avgTime">0</span>
-                    <span class="stat-unit">ms</span>
-                </div>
+        <!-- Results Screen -->
+        <div class="results-screen" id="resultsScreen">
+            <h2>CHALLENGE COMPLETE</h2>
+            <div class="result-time" id="averageTime">0ms</div>
+            <div class="result-message">Average Reaction Time</div>
+            <div class="rounds-survived" id="roundsSurvived">You'd survive 0 rounds in VEDICI mode</div>
+            
+            <div class="button-group">
+                <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
+                <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
+                <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Best Time</div>
-                <div>
-                    <span class="stat-value" id="bestTime">0</span>
-                    <span class="stat-unit">ms</span>
-                </div>
-            </div>
+            
+            <div id="leaderboardContainer"></div>
         </div>
 
-        <div class="performance-message" id="performanceMessage"></div>
-
-        <div class="cta-section">
-            <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
-            <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">
-                GET YOUR EDGE → VEDICI.GG
-            </button>
-        </div>
-
-        <!-- Leaderboard -->
-        <div class="leaderboard">
-            <h3 class="leaderboard-title">Top Performers</h3>
-            <div class="leaderboard-list" id="leaderboardList">
-                <!-- Populated by JavaScript -->
+        <!-- Name Input Modal -->
+        <div class="modal" id="nameModal">
+            <div class="modal-content">
+                <h3>ENTER YOUR NAME</h3>
+                <input type="text" class="name-input" id="playerName" placeholder="Your name" maxlength="20">
+                <button class="btn" onclick="submitScore()">SUBMIT</button>
+                <button class="btn btn-secondary" onclick="closeModal()">CANCEL</button>
+                <div class="error-message" id="errorMessage"></div>
             </div>
-            <button class="btn btn-secondary" onclick="clearLeaderboard()" style="margin-top: 20px; padding: 12px 30px; font-size: 0.85rem;">
-                CLEAR LEADERBOARD
-            </button>
         </div>
     </div>
 
     <script>
-        // Game State
-        let gameState = {
-            currentRound: 0,
-            maxRounds: 5,
-            reactionTimes: [],
-            startTime: 0,
-            timeout: null,
-            isWaiting: false,
-            currentScore: 0,
-            playerName: '',
-            scoreSaved: false
+        // Firebase Configuration - Your specific config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvMuK_cxGhu-oCIBoYedbNGnB3QkJ5ghQ",
+            authDomain: "vedici-reaction-game.firebaseapp.com",
+            projectId: "vedici-reaction-game",
+            storageBucket: "vedici-reaction-game.firebasestorage.app",
+            messagingSenderId: "368959111382",
+            appId: "1:368959111382:web:d1f7ef6043e223a49cc977"
         };
 
-        // Get elements
-        const startScreen = document.getElementById('startScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const resultsScreen = document.getElementById('resultsScreen');
-        const gameInfo = document.getElementById('gameInfo');
-        const roundCounter = document.getElementById('roundCounter');
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // Restart game - go back to start screen
-        function restartGame() {
-            // Hide results screen
-            resultsScreen.classList.add('hidden');
+        // Game Variables
+        let gameState = 'idle';
+        let startTime = 0;
+        let reactionTimes = [];
+        let currentRound = 0;
+        let timeoutId = null;
+        let avgReactionTime = 0;
+        const TOTAL_ROUNDS = 5;
 
-            // Show start screen
-            startScreen.classList.remove('hidden');
-
-            // Clear and reset name input
-            const nameInput = document.getElementById('playerName');
-            nameInput.value = '';
-            nameInput.style.border = '1px solid rgba(212, 175, 55, 0.3)';
-            nameInput.placeholder = 'Enter your name';
+        // Show/Hide Elements
+        function showElement(id) {
+            document.getElementById(id).style.display = 'flex';
         }
 
-        // Start game
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Start Game
         function startGame() {
-            // Get player name
-            const nameInput = document.getElementById('playerName');
-            const playerName = nameInput.value.trim();
-
-            // Validate name
-            if (!playerName) {
-                nameInput.style.border = '2px solid #ff4444';
-                nameInput.placeholder = 'Please enter your name';
-                setTimeout(() => {
-                    nameInput.style.border = '1px solid rgba(212, 175, 55, 0.3)';
-                }, 2000);
-                return;
-            }
-
-            // Save player name
-            gameState.playerName = playerName;
-
-            // Reset state
-            gameState.currentRound = 0;
-            gameState.reactionTimes = [];
-            gameState.scoreSaved = false;
-
-            // Hide other screens
-            startScreen.classList.add('hidden');
-            resultsScreen.classList.add('hidden');
-
-            // Show game screen
-            gameScreen.classList.remove('hidden');
-
-            // Start first round
+            reactionTimes = [];
+            currentRound = 0;
+            gameState = 'playing';
+            
+            hideElement('startScreen');
+            hideElement('resultsScreen');
+            showElement('gameArea');
+            
             nextRound();
         }
 
-        // Next round
+        // Next Round
         function nextRound() {
-            if (gameState.currentRound >= gameState.maxRounds) {
+            currentRound++;
+            
+            if (currentRound > TOTAL_ROUNDS) {
                 endGame();
                 return;
             }
-
-            gameState.currentRound++;
-            roundCounter.textContent = `ROUND ${gameState.currentRound}/${gameState.maxRounds}`;
-
-            // Reset screen to waiting state
-            gameScreen.classList.remove('active', 'too-early');
-            gameScreen.classList.add('waiting');
-            gameInfo.textContent = 'FOCUS... WAIT FOR GOLD';
-            gameState.isWaiting = true;
-
-            // Random delay between 1.5s and 4s
-            const delay = 1500 + Math.random() * 2500;
-
-            gameState.timeout = setTimeout(() => {
-                if (!gameState.isWaiting) return; // User clicked too early
-
-                // Change to active state
-                gameScreen.classList.remove('waiting');
-                gameScreen.classList.add('active');
-                gameInfo.textContent = 'CLICK NOW!';
-                gameState.startTime = Date.now();
-                gameState.isWaiting = false;
+            
+            document.getElementById('roundIndicator').textContent = `Round ${currentRound}/${TOTAL_ROUNDS}`;
+            document.getElementById('instruction').textContent = 'Wait for GOLD...';
+            
+            const gameArea = document.getElementById('gameArea');
+            gameArea.className = 'game-area waiting';
+            gameState = 'waiting';
+            
+            // Random delay between 2-6 seconds
+            const delay = 2000 + Math.random() * 4000;
+            
+            timeoutId = setTimeout(() => {
+                gameArea.className = 'game-area ready';
+                document.getElementById('instruction').textContent = 'CLICK NOW!';
+                gameState = 'ready';
+                startTime = Date.now();
             }, delay);
         }
 
-        // Handle click
-        gameScreen.addEventListener('click', () => {
-            // If still waiting (clicked too early)
-            if (gameState.isWaiting) {
-                clearTimeout(gameState.timeout);
-                gameScreen.classList.remove('waiting');
-                gameScreen.classList.add('too-early');
-                gameInfo.textContent = 'TOO EARLY! WAIT FOR GOLD';
-
+        // Handle Click
+        function handleClick() {
+            if (gameState === 'waiting') {
+                // Too early!
+                clearTimeout(timeoutId);
+                const gameArea = document.getElementById('gameArea');
+                gameArea.className = 'game-area early';
+                document.getElementById('instruction').textContent = 'Too early! Click to try again';
+                gameState = 'early';
+                currentRound--;
+            } else if (gameState === 'ready') {
+                // Calculate reaction time
+                const reactionTime = Date.now() - startTime;
+                reactionTimes.push(reactionTime);
+                
+                document.getElementById('instruction').textContent = `${reactionTime}ms - Nice!`;
+                gameState = 'result';
+                
                 setTimeout(() => {
                     nextRound();
                 }, 1500);
-                return;
+            } else if (gameState === 'early') {
+                nextRound();
             }
+        }
 
-            // If active (correct click)
-            if (gameScreen.classList.contains('active')) {
-                const reactionTime = Date.now() - gameState.startTime;
-                gameState.reactionTimes.push(reactionTime);
-
-                // Show feedback
-                gameInfo.textContent = `${reactionTime} ms`;
-
-                setTimeout(() => {
-                    nextRound();
-                }, 800);
-            }
-        });
-
-        // End game
+        // End Game
         function endGame() {
-            gameScreen.classList.add('hidden');
-            resultsScreen.classList.remove('hidden');
-
-            // Calculate stats
-            const avgTime = Math.round(
-                gameState.reactionTimes.reduce((a, b) => a + b, 0) / gameState.reactionTimes.length
-            );
-            const bestTime = Math.min(...gameState.reactionTimes);
-
-            document.getElementById('avgTime').textContent = avgTime;
-            document.getElementById('bestTime').textContent = bestTime;
-
-            // Performance message
-            let message = '';
-            let surviveRounds = 0;
-
-            if (avgTime < 200) {
-                message = 'You have <strong>elite reflexes</strong>. You\'d survive <strong>50+ rounds</strong> in VEDICI mode.';
-                surviveRounds = 50;
-            } else if (avgTime < 250) {
-                message = 'You have <strong>excellent focus</strong>. You\'d survive <strong>30-40 rounds</strong> in VEDICI mode.';
-                surviveRounds = 35;
-            } else if (avgTime < 300) {
-                message = 'You have <strong>solid reflexes</strong>. You\'d survive <strong>20-25 rounds</strong> in VEDICI mode.';
-                surviveRounds = 22;
-            } else if (avgTime < 350) {
-                message = 'You have <strong>good potential</strong>. You\'d survive <strong>15-20 rounds</strong> in VEDICI mode.';
-                surviveRounds = 17;
+            gameState = 'idle';
+            hideElement('gameArea');
+            
+            // Calculate average
+            avgReactionTime = Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length);
+            
+            // Calculate rounds survived (based on reaction time)
+            let roundsSurvived;
+            if (avgReactionTime < 200) {
+                roundsSurvived = "∞";
+            } else if (avgReactionTime < 250) {
+                roundsSurvived = "50+";
+            } else if (avgReactionTime < 300) {
+                roundsSurvived = "30";
+            } else if (avgReactionTime < 350) {
+                roundsSurvived = "20";
+            } else if (avgReactionTime < 400) {
+                roundsSurvived = "10";
             } else {
-                message = 'You have <strong>room to improve</strong>. Keep training to unlock your edge.';
-                surviveRounds = 10;
+                roundsSurvived = "5";
             }
-
-            document.getElementById('performanceMessage').innerHTML = message;
-
-            // Save to leaderboard
-            saveToLeaderboard(avgTime);
-            gameState.currentScore = avgTime;
-            displayLeaderboard();
+            
+            document.getElementById('averageTime').textContent = `${avgReactionTime}ms`;
+            document.getElementById('roundsSurvived').textContent = `You'd survive ${roundsSurvived} rounds in VEDICI mode`;
+            
+            showElement('resultsScreen');
+            loadLeaderboard('leaderboardContainer');
         }
 
-        // Leaderboard functions
-        function saveToLeaderboard(score) {
-            // Prevent duplicate saves
-            if (gameState.scoreSaved) {
-                console.log('Score already saved, skipping duplicate save');
+        // Save Score
+        function saveAndShowLeaderboard() {
+            showElement('nameModal');
+            document.getElementById('playerName').focus();
+        }
+
+        // Submit Score to Firebase
+        async function submitScore() {
+            const playerName = document.getElementById('playerName').value.trim();
+            
+            if (!playerName) {
+                document.getElementById('errorMessage').textContent = 'Please enter your name';
                 return;
             }
-
-            let leaderboard = getLeaderboard();
-
-            const entry = {
-                name: gameState.playerName,
-                score: score,
-                date: new Date().toISOString(),
-                timestamp: Date.now()
-            };
-
-            console.log('Saving player to leaderboard:', entry);
-            leaderboard.push(entry);
-
-            // Sort by score (lower is better)
-            leaderboard.sort((a, b) => a.score - b.score);
-
-            // Keep only top 10
-            leaderboard = leaderboard.slice(0, 10);
-
-            localStorage.setItem('vedici_leaderboard', JSON.stringify(leaderboard));
-            console.log('Leaderboard saved:', leaderboard);
-
-            // Mark as saved
-            gameState.scoreSaved = true;
-        }
-
-        function getLeaderboard() {
-            const data = localStorage.getItem('vedici_leaderboard');
-            return data ? JSON.parse(data) : [];
-        }
-
-        function displayLeaderboard() {
-            const leaderboard = getLeaderboard();
-            const container = document.getElementById('leaderboardList');
-
-            if (leaderboard.length === 0) {
-                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No records yet. Be the first!</div>';
+            
+            if (playerName.length > 20) {
+                document.getElementById('errorMessage').textContent = 'Name too long (max 20 characters)';
                 return;
             }
-
-            container.innerHTML = leaderboard.map((entry, index) => {
-                const isCurrent = entry.score === gameState.currentScore &&
-                                 Math.abs(entry.timestamp - Date.now()) < 1000;
-
-                return `
-                    <div class="leaderboard-item ${isCurrent ? 'current' : ''}">
-                        <div class="leaderboard-rank">#${index + 1}</div>
-                        <div class="leaderboard-name">${entry.name || 'Anonymous'}</div>
-                        <div class="leaderboard-score">${entry.score} ms</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays < 7) return `${diffDays}d ago`;
-
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        function clearLeaderboard() {
-            if (confirm('Are you sure you want to clear the leaderboard?')) {
-                localStorage.removeItem('vedici_leaderboard');
-                displayLeaderboard();
-                console.log('Leaderboard cleared!');
+            
+            try {
+                // Save to Firebase
+                await db.collection('leaderboard').add({
+                    name: playerName,
+                    score: avgReactionTime,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    date: new Date().toISOString()
+                });
+                
+                closeModal();
+                loadLeaderboard('leaderboardContainer');
+                
+            } catch (error) {
+                console.error('Error saving score:', error);
+                document.getElementById('errorMessage').textContent = 'Failed to save score. Please try again.';
             }
         }
 
-        // Prevent accidental navigation
-        window.addEventListener('beforeunload', (e) => {
-            if (gameState.currentRound > 0 && gameState.currentRound < gameState.maxRounds) {
-                e.preventDefault();
-                e.returnValue = '';
+        // Close Modal
+        function closeModal() {
+            hideElement('nameModal');
+            document.getElementById('playerName').value = '';
+            document.getElementById('errorMessage').textContent = '';
+        }
+
+        // Load Leaderboard
+        async function loadLeaderboard(containerId) {
+            try {
+                const snapshot = await db.collection('leaderboard')
+                    .orderBy('score', 'asc')
+                    .limit(10)
+                    .get();
+                
+                let html = '<div class="leaderboard"><h2>🏆 ELITE LEADERBOARD</h2><ol>';
+                
+                let rank = 1;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+                    html += `
+                        <li>
+                            <span class="rank">${medal || '#' + rank}</span>
+                            <span class="player-name">${data.name}</span>
+                            <span class="player-score">${data.score}ms</span>
+                        </li>
+                    `;
+                    rank++;
+                });
+                
+                if (rank === 1) {
+                    html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
+                }
+                
+                html += '</ol></div>';
+                document.getElementById(containerId).innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById(containerId).innerHTML = '<p style="color: #ff3333;">Failed to load leaderboard</p>';
             }
+        }
+
+        // Show Leaderboard from Start Screen
+        async function showLeaderboard() {
+            hideElement('startScreen');
+            showElement('resultsScreen');
+            document.querySelector('.results-screen h2').style.display = 'none';
+            document.querySelector('.result-time').style.display = 'none';
+            document.querySelector('.result-message').style.display = 'none';
+            document.querySelector('.rounds-survived').style.display = 'none';
+            document.querySelector('.button-group').innerHTML = '<button class="btn" onclick="backToStart()">BACK</button>';
+            
+            loadLeaderboard('leaderboardContainer');
+        }
+
+        // Back to Start
+        function backToStart() {
+            hideElement('resultsScreen');
+            showElement('startScreen');
+            // Reset results screen
+            document.querySelector('.results-screen h2').style.display = 'block';
+            document.querySelector('.result-time').style.display = 'block';
+            document.querySelector('.result-message').style.display = 'block';
+            document.querySelector('.rounds-survived').style.display = 'block';
+            document.querySelector('.button-group').innerHTML = `
+                <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
+                <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
+                <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
+            `;
+        }
+
+        // Keyboard Support for Name Input
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('playerName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    submitScore();
+                }
+            });
         });
     </script>
 </body>
