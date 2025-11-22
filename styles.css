@@ -299,6 +299,15 @@ body {
     white-space: nowrap;
 }
 
+/* Mobile override for h2 */
+@media (max-width: 768px) {
+    .results-screen h2 {
+        white-space: normal !important;
+        display: block !important;
+        width: 100% !important;
+    }
+}
+
 .result-time {
     font-size: 4rem;
     font-weight: 800;
@@ -306,6 +315,15 @@ body {
     margin: 0;
     line-height: 1;
     white-space: nowrap;
+}
+
+/* Mobile override for result-time */
+@media (max-width: 768px) {
+    .result-time {
+        white-space: normal !important;
+        display: block !important;
+        width: 100% !important;
+    }
 }
 
 /* Average Message Row */
