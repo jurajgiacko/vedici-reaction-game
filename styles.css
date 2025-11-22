@@ -274,11 +274,18 @@ body {
     flex-wrap: wrap;
 }
 
-/* On mobile, force column layout */
+/* On mobile, force column layout - EARLY OVERRIDE */
 @media (max-width: 768px) {
     .result-header {
         flex-direction: column !important;
         flex-wrap: nowrap !important;
+        display: flex !important;
+    }
+    
+    .result-header > * {
+        width: 100% !important;
+        display: block !important;
+        text-align: center !important;
     }
 }
 
@@ -621,6 +628,17 @@ body {
         margin-bottom: 1rem !important;
         width: 100% !important;
         flex-wrap: nowrap !important;
+        display: flex !important;
+    }
+    
+    /* Force all children to be block elements */
+    .result-header > h2,
+    .result-header > .result-time {
+        display: block !important;
+        width: 100% !important;
+        text-align: center !important;
+        white-space: normal !important;
+        margin: 0 !important;
     }
 
     .results-screen h2 {
