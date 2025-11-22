@@ -382,6 +382,17 @@
             margin-top: 1rem;
             font-size: 0.9rem;
         }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+
+        .loading-state .loading {
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -424,7 +435,7 @@
             <div class="modal-content">
                 <h3>ENTER YOUR EMAIL</h3>
                 <input type="email" class="name-input" id="playerName" placeholder="your.email@example.com" maxlength="100">
-                <button class="btn" onclick="submitScore()">SUBMIT</button>
+                <button class="btn" id="submitButton" onclick="submitScore()">SUBMIT</button>
                 <button class="btn btn-secondary" onclick="closeModal()">CANCEL</button>
                 <div class="error-message" id="errorMessage"></div>
             </div>
@@ -443,8 +454,18 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db;
+        let firebaseInitialized = false;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            firebaseInitialized = true;
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            firebaseInitialized = false;
+        }
 
         // Game Variables
         let gameState = 'idle';
@@ -570,23 +591,37 @@
         // Submit Score to Firebase
         async function submitScore() {
             const playerEmail = document.getElementById('playerName').value.trim();
+            const errorElement = document.getElementById('errorMessage');
+            const submitButton = document.getElementById('submitButton');
+            const originalButtonText = submitButton.textContent;
             
             if (!playerEmail) {
-                document.getElementById('errorMessage').textContent = 'Please enter your email address';
+                errorElement.textContent = 'Please enter your email address';
                 return;
             }
             
             // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(playerEmail)) {
-                document.getElementById('errorMessage').textContent = 'Please enter a valid email address';
+                errorElement.textContent = 'Please enter a valid email address';
                 return;
             }
             
             if (playerEmail.length > 100) {
-                document.getElementById('errorMessage').textContent = 'Email too long (max 100 characters)';
+                errorElement.textContent = 'Email too long (max 100 characters)';
                 return;
             }
+            
+            if (!firebaseInitialized || !db) {
+                errorElement.textContent = 'Firebase not initialized. Please refresh the page.';
+                console.error('Firebase not initialized');
+                return;
+            }
+            
+            // Show loading state
+            errorElement.textContent = '';
+            submitButton.disabled = true;
+            submitButton.textContent = 'SAVING...';
             
             try {
                 // Save to Firebase
@@ -597,12 +632,28 @@
                     date: new Date().toISOString()
                 });
                 
+                console.log('Score saved successfully');
                 closeModal();
-                loadLeaderboard('leaderboardContainer');
+                await loadLeaderboard('leaderboardContainer');
                 
             } catch (error) {
                 console.error('Error saving score:', error);
-                document.getElementById('errorMessage').textContent = 'Failed to save score. Please try again.';
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                
+                let errorMsg = 'Failed to save score. ';
+                if (error.code === 'permission-denied') {
+                    errorMsg += 'Permission denied. Check Firebase security rules.';
+                } else if (error.code === 'unavailable') {
+                    errorMsg += 'Firebase service unavailable. Please try again.';
+                } else {
+                    errorMsg += 'Please try again.';
+                }
+                
+                errorElement.textContent = errorMsg;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         }
 
@@ -615,6 +666,17 @@
 
         // Load Leaderboard
         async function loadLeaderboard(containerId) {
+            const container = document.getElementById(containerId);
+            
+            // Show loading state
+            container.innerHTML = '<div class="loading-state"><div class="loading"></div><p>Loading leaderboard...</p></div>';
+            
+            if (!firebaseInitialized || !db) {
+                container.innerHTML = '<p style="color: #ff3333; text-align: center;">Firebase not initialized. Please refresh the page.</p>';
+                console.error('Firebase not initialized');
+                return;
+            }
+            
             try {
                 const snapshot = await db.collection('leaderboard')
                     .orderBy('score', 'asc')
@@ -643,11 +705,26 @@
                 }
                 
                 html += '</ol></div>';
-                document.getElementById(containerId).innerHTML = html;
+                container.innerHTML = html;
                 
             } catch (error) {
                 console.error('Error loading leaderboard:', error);
-                document.getElementById(containerId).innerHTML = '<p style="color: #ff3333;">Failed to load leaderboard</p>';
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                
+                let errorMsg = '<p style="color: #ff3333; text-align: center;">';
+                if (error.code === 'permission-denied') {
+                    errorMsg += 'Permission denied. Check Firebase security rules.';
+                } else if (error.code === 'unavailable') {
+                    errorMsg += 'Firebase service unavailable. Please try again.';
+                } else if (error.code === 'failed-precondition') {
+                    errorMsg += 'Firestore index required. Check Firebase console.';
+                } else {
+                    errorMsg += 'Failed to load leaderboard. Please refresh the page.';
+                }
+                errorMsg += '</p>';
+                
+                container.innerHTML = errorMsg;
             }
         }
 
