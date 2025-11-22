@@ -127,6 +127,7 @@
             align-items: center;
             cursor: pointer;
             position: relative;
+            overflow: hidden;
         }
 
         .game-area.waiting {
@@ -141,6 +142,103 @@
 
         .game-area.early {
             background: #ff3333;
+        }
+
+        /* Click Ripple Effect */
+        .click-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            pointer-events: none;
+            transform: scale(0);
+            animation: ripple 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .click-ripple::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 50%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: translate(-50%, -50%) scale(0);
+            animation: rippleInner 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes rippleInner {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+
+        /* Glow Circles (background effect) */
+        .glow-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            pointer-events: none;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        .glow-circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .glow-circle:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 0.5s;
+        }
+
+        .glow-circle:nth-child(3) {
+            width: 500px;
+            height: 500px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 1s;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                opacity: 0.3;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: translate(-50%, -50%) scale(1.05);
+            }
         }
 
         .instruction {
@@ -418,7 +516,10 @@
         </div>
 
         <!-- Game Area -->
-        <div class="game-area" id="gameArea" onclick="handleClick()">
+        <div class="game-area" id="gameArea" onclick="handleClick(event)">
+            <div class="glow-circle"></div>
+            <div class="glow-circle"></div>
+            <div class="glow-circle"></div>
             <div class="round-indicator" id="roundIndicator"></div>
             <div class="instruction" id="instruction">Wait for GOLD...</div>
         </div>
@@ -535,8 +636,31 @@
             }, delay);
         }
 
+        // Create Ripple Effect
+        function createRipple(event) {
+            const gameArea = document.getElementById('gameArea');
+            const ripple = document.createElement('div');
+            ripple.classList.add('click-ripple');
+            
+            const rect = gameArea.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const size = 120;
+            
+            ripple.style.width = size + 'px';
+            ripple.style.height = size + 'px';
+            ripple.style.left = (x - size / 2) + 'px';
+            ripple.style.top = (y - size / 2) + 'px';
+            
+            gameArea.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 800);
+        }
+
         // Handle Click
-        function handleClick() {
+        function handleClick(event) {
             if (gameState === 'waiting') {
                 // Too early!
                 clearTimeout(timeoutId);
@@ -546,6 +670,9 @@
                 gameState = 'early';
                 currentRound--;
             } else if (gameState === 'ready') {
+                // Create ripple effect on click
+                createRipple(event);
+                
                 // Calculate reaction time
                 const reactionTime = Date.now() - startTime;
                 reactionTimes.push(reactionTime);
