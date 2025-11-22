@@ -103,27 +103,12 @@
         // Show/Hide Elements
         function showElement(id) {
             const element = document.getElementById(id);
-            if (id === 'resultsScreen') {
-                element.classList.add('active');
-                // Force display in case CSS doesn't apply
-                setTimeout(() => {
-                    if (getComputedStyle(element).display === 'none') {
-                        element.style.display = 'flex';
-                    }
-                }, 10);
-            } else {
-                element.style.display = 'flex';
-            }
+            element.style.display = 'flex';
         }
 
         function hideElement(id) {
             const element = document.getElementById(id);
-            if (id === 'resultsScreen') {
-                element.classList.remove('active');
-                element.style.display = 'none';
-            } else {
-                element.style.display = 'none';
-            }
+            element.style.display = 'none';
         }
 
         // Start Game
@@ -261,7 +246,8 @@
         // Skip saving score
         function skipSave() {
             closeModal();
-            showElement('resultsScreen');
+            const resultsScreen = document.getElementById('resultsScreen');
+            resultsScreen.style.display = 'flex';
             loadLeaderboard('leaderboardContainer');
         }
 
@@ -334,7 +320,8 @@
                 
                 console.log('Score saved successfully');
                 closeModal();
-                showElement('resultsScreen');
+                const resultsScreen = document.getElementById('resultsScreen');
+                resultsScreen.style.display = 'flex';
                 await loadLeaderboard('leaderboardContainer');
                 
             } catch (error) {
@@ -432,30 +419,49 @@
         // Show Leaderboard from Start Screen
         async function showLeaderboard() {
             hideElement('startScreen');
-            showElement('resultsScreen');
-            document.querySelector('.results-screen h2').style.display = 'none';
-            document.querySelector('.result-time').style.display = 'none';
-            document.querySelector('.result-message').style.display = 'none';
-            document.querySelector('.rounds-survived').style.display = 'none';
-            document.querySelector('.button-group').innerHTML = '<button class="btn" onclick="backToStart()">BACK</button>';
+            const resultsScreen = document.getElementById('resultsScreen');
+            resultsScreen.style.display = 'flex';
             
-            loadLeaderboard('leaderboardContainer');
+            // Hide result elements, show only leaderboard
+            const h2 = resultsScreen.querySelector('h2');
+            const time = resultsScreen.querySelector('.result-time');
+            const message = resultsScreen.querySelector('.result-message');
+            const rounds = resultsScreen.querySelector('.rounds-survived');
+            const buttonGroup = resultsScreen.querySelector('.button-group');
+            
+            if (h2) h2.style.display = 'none';
+            if (time) time.style.display = 'none';
+            if (message) message.style.display = 'none';
+            if (rounds) rounds.style.display = 'none';
+            if (buttonGroup) buttonGroup.innerHTML = '<button class="btn" onclick="backToStart()">BACK</button>';
+            
+            await loadLeaderboard('leaderboardContainer');
         }
 
         // Back to Start
         function backToStart() {
-            hideElement('resultsScreen');
+            const resultsScreen = document.getElementById('resultsScreen');
+            resultsScreen.style.display = 'none';
             showElement('startScreen');
-            // Reset results screen
-            document.querySelector('.results-screen h2').style.display = 'block';
-            document.querySelector('.result-time').style.display = 'block';
-            document.querySelector('.result-message').style.display = 'block';
-            document.querySelector('.rounds-survived').style.display = 'block';
-            document.querySelector('.button-group').innerHTML = `
-                <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
-                <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
-                <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
-            `;
+            
+            // Reset results screen elements
+            const h2 = resultsScreen.querySelector('h2');
+            const time = resultsScreen.querySelector('.result-time');
+            const message = resultsScreen.querySelector('.result-message');
+            const rounds = resultsScreen.querySelector('.rounds-survived');
+            const buttonGroup = resultsScreen.querySelector('.button-group');
+            
+            if (h2) h2.style.display = 'block';
+            if (time) time.style.display = 'block';
+            if (message) message.style.display = 'block';
+            if (rounds) rounds.style.display = 'block';
+            if (buttonGroup) {
+                buttonGroup.innerHTML = `
+                    <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
+                    <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
+                    <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
+                `;
+            }
         }
 
         // Keyboard Support for Email Input

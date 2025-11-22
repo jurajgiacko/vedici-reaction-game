@@ -247,7 +247,7 @@ body {
 
 /* Results Screen - CLEAN LAYOUT */
 .results-screen {
-    display: none !important;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
@@ -261,10 +261,6 @@ body {
     -webkit-overflow-scrolling: touch;
     text-align: center;
     animation: fadeIn 1s ease;
-}
-
-.results-screen.active {
-    display: flex !important;
 }
 
 /* Header Row: CHALLENGE COMPLETE + Time */
