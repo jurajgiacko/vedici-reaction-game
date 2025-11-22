@@ -102,11 +102,21 @@
 
         // Show/Hide Elements
         function showElement(id) {
-            document.getElementById(id).style.display = 'flex';
+            const element = document.getElementById(id);
+            if (id === 'resultsScreen') {
+                element.classList.add('active');
+            } else {
+                element.style.display = 'flex';
+            }
         }
 
         function hideElement(id) {
-            document.getElementById(id).style.display = 'none';
+            const element = document.getElementById(id);
+            if (id === 'resultsScreen') {
+                element.classList.remove('active');
+            } else {
+                element.style.display = 'none';
+            }
         }
 
         // Start Game
