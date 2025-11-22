@@ -37,18 +37,20 @@
 
         <!-- Results Screen -->
         <div class="results-screen" id="resultsScreen">
-            <h2>CHALLENGE COMPLETE</h2>
-            <div class="result-time" id="averageTime">0ms</div>
+            <div class="result-header">
+                <h2>CHALLENGE COMPLETE</h2>
+                <div class="result-time" id="averageTime">0ms</div>
+            </div>
             <div class="result-message">Average Reaction Time</div>
             <div class="rounds-survived" id="roundsSurvived">You'd survive 0 rounds in VEDICI mode</div>
+            
+            <div id="leaderboardContainer"></div>
             
             <div class="button-group">
                 <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
                 <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
                 <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
             </div>
-            
-            <div id="leaderboardContainer"></div>
         </div>
 
         <!-- Email Input Modal -->

@@ -261,11 +261,20 @@ body {
     position: relative;
 }
 
+.result-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
 .results-screen h2 {
     font-size: 2rem;
     font-weight: 800;
     color: #ffffff;
-    margin-bottom: 2rem;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
@@ -274,13 +283,13 @@ body {
     font-size: 4rem;
     font-weight: 800;
     color: #d4af37;
-    margin: 1.5rem 0;
+    margin: 0;
     line-height: 1.2;
 }
 
 .result-message {
     font-size: 1.5rem;
-    margin: 1rem 0;
+    margin: 1rem 0 1.5rem;
     color: #ffffff;
     font-weight: 600;
 }
@@ -288,7 +297,7 @@ body {
 .rounds-survived {
     font-size: 1.2rem;
     color: #888;
-    margin: 2rem 0;
+    margin: 1.5rem 0 2rem;
     line-height: 1.6;
 }
 
@@ -297,7 +306,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin: 2rem auto;
+    margin: 2rem auto 1rem;
     max-width: 400px;
     width: 100%;
 }
@@ -582,32 +591,41 @@ body {
         align-items: center;
     }
 
+    .result-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
     .results-screen h2 {
-        font-size: 1.4rem;
-        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        margin: 0;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
 
     .result-time {
-        font-size: 3.5rem;
+        font-size: 2.5rem;
         font-weight: 800;
-        margin: 1rem 0;
+        margin: 0;
         line-height: 1.1;
     }
 
     .result-message {
-        font-size: 1rem;
-        margin: 0.5rem 0;
+        font-size: 0.9rem;
+        margin: 0.5rem 0 1rem;
         font-weight: 500;
     }
 
     .rounds-survived {
-        font-size: 0.9rem;
-        margin: 1.5rem 0;
+        font-size: 0.85rem;
+        margin: 1rem 0 1.5rem;
         line-height: 1.5;
-        padding: 0 1rem;
+        padding: 0 0.5rem;
     }
 
     /* Button Group Mobile */
@@ -684,7 +702,7 @@ body {
     /* Leaderboard Container Mobile */
     #leaderboardContainer {
         width: 100%;
-        margin: 0.5rem 0;
+        margin: 1.5rem 0;
         padding: 0;
     }
 
