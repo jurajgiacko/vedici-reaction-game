@@ -592,82 +592,36 @@ body {
         max-width: 300px;
     }
 
+    /* Results Screen Mobile - EXACT SAME LAYOUT AS DESKTOP */
     .results-screen {
         padding: 1.5rem 1rem;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
+        /* All other properties inherit from desktop */
     }
     
     .results-screen.active {
         display: flex;
     }
 
-    /* Header Row: CHALLENGE COMPLETE + Time - same layout as desktop */
-    .result-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
+    /* Only adjust font sizes, keep all layout properties same as desktop */
     .results-screen h2 {
-        font-size: 1.3rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        white-space: nowrap;
+        font-size: 1.4rem;
     }
 
     .result-time {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #d4af37;
-        margin: 0;
-        line-height: 1;
-        white-space: nowrap;
+        font-size: 2.8rem;
     }
 
-    /* Average Message Row - same layout as desktop */
     .result-message {
-        font-size: 1rem;
-        margin: 0 0 1rem 0;
-        color: #ffffff;
-        font-weight: 600;
-        width: 100%;
+        font-size: 1.1rem;
     }
 
-    /* Rounds Survived - same layout as desktop */
     .rounds-survived {
-        font-size: 0.9rem;
-        color: #888;
-        margin: 0 0 1.5rem 0;
-        line-height: 1.6;
-        width: 100%;
+        font-size: 1rem;
     }
     
-    /* Leaderboard Container - same layout as desktop */
-    #leaderboardContainer {
-        width: 100%;
-        max-width: 100%;
-        margin: 0 0 1.5rem 0;
-        order: 1;
-    }
-
-    /* Button Group Mobile - same layout as desktop */
+    /* Button Group - same as desktop, just adjust button size */
     .button-group {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin: 0;
         max-width: 100%;
-        width: 100%;
-        order: 2;
     }
 
     .button-group .btn {
