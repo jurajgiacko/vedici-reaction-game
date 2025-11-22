@@ -105,6 +105,12 @@
             const element = document.getElementById(id);
             if (id === 'resultsScreen') {
                 element.classList.add('active');
+                // Force display in case CSS doesn't apply
+                setTimeout(() => {
+                    if (getComputedStyle(element).display === 'none') {
+                        element.style.display = 'flex';
+                    }
+                }, 10);
             } else {
                 element.style.display = 'flex';
             }
@@ -114,6 +120,7 @@
             const element = document.getElementById(id);
             if (id === 'resultsScreen') {
                 element.classList.remove('active');
+                element.style.display = 'none';
             } else {
                 element.style.display = 'none';
             }
