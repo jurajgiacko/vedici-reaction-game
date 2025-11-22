@@ -201,6 +201,12 @@
             border-radius: 50%;
             border: 2px solid rgba(212, 175, 55, 0.3);
             pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-area.ready .glow-circle {
+            opacity: 1;
             animation: pulseGlow 2s ease-in-out infinite;
         }
 
