@@ -592,58 +592,92 @@ body {
         max-width: 300px;
     }
 
-    /* Results Screen Mobile - STACK EVERYTHING VERTICALLY */
+    /* Results Screen Mobile - FORCE EVERYTHING VERTICAL */
     .results-screen {
-        padding: 1.5rem 1rem;
+        padding: 1rem 0.75rem;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
     }
     
     .results-screen.active {
-        display: flex;
+        display: flex !important;
     }
 
-    /* Header - stack vertically on mobile */
+    /* Header - FORCE vertical stack on mobile */
     .result-header {
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+        width: 100% !important;
     }
 
     .results-screen h2 {
-        font-size: 1.4rem;
-        white-space: normal;
+        font-size: 1.3rem;
+        white-space: normal !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
 
     .result-time {
-        font-size: 2.8rem;
-        white-space: normal;
+        font-size: 2.5rem;
+        white-space: normal !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
 
     .result-message {
-        font-size: 1.1rem;
-        margin: 0 0 1rem 0;
+        font-size: 1rem;
+        margin: 0 0 1rem 0 !important;
+        width: 100% !important;
+        text-align: center !important;
     }
 
     .rounds-survived {
-        font-size: 1rem;
-        margin: 0 0 1.5rem 0;
+        font-size: 0.9rem;
+        margin: 0 0 1.5rem 0 !important;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 0 !important;
     }
     
-    /* Leaderboard Container */
+    /* Leaderboard Container - FORCE full width, no side positioning */
     #leaderboardContainer {
-        margin: 0 0 1.5rem 0;
-        max-width: 100%;
+        margin: 0 0 1.5rem 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        order: 1 !important;
+        position: relative !important;
+        float: none !important;
+    }
+    
+    /* Leaderboard itself */
+    .leaderboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        position: relative !important;
+        float: none !important;
     }
     
     /* Button Group - full width on mobile */
     .button-group {
-        max-width: 100%;
-        width: 100%;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        order: 2 !important;
+        position: relative !important;
+        float: none !important;
     }
 
     .button-group .btn {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
         padding: 1rem 2rem;
         font-size: 0.95rem;
     }
