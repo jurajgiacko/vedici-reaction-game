@@ -259,6 +259,12 @@
             display: none;
             text-align: center;
             animation: fadeIn 1s ease;
+            width: 100%;
+            max-width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .result-time {
@@ -289,7 +295,10 @@
             max-width: 500px;
             max-height: 400px;
             overflow-y: auto;
+            overflow-x: hidden;
             border: 1px solid #333;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
         }
 
         .leaderboard h2 {
@@ -314,6 +323,10 @@
             align-items: center;
             font-size: 1.1rem;
             transition: transform 0.2s ease;
+            min-height: 50px;
+            box-sizing: border-box;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .leaderboard li:hover {
@@ -345,6 +358,10 @@
             flex: 1;
             text-align: left;
             margin-right: 1rem;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .player-score {
@@ -356,6 +373,14 @@
         .leaderboard li:nth-child(2) .player-score,
         .leaderboard li:nth-child(3) .player-score {
             color: #000;
+        }
+
+        /* Leaderboard Container */
+        #leaderboardContainer {
+            width: 100%;
+            max-width: 100%;
+            margin: 1rem 0;
+            box-sizing: border-box;
         }
 
         /* Name Input Modal */
@@ -463,14 +488,85 @@
                 font-size: 3rem;
             }
 
+            .result-message {
+                font-size: 1.2rem;
+            }
+
+            .rounds-survived {
+                font-size: 1rem;
+                margin: 1rem 0;
+            }
+
+            /* Results Screen Mobile */
+            .results-screen {
+                padding: 0.5rem;
+                max-height: 100vh;
+                overflow-y: auto;
+            }
+
+            /* Leaderboard Mobile */
             .leaderboard {
                 padding: 1rem;
-                margin: 1rem;
+                margin: 1rem 0.5rem;
+                max-width: calc(100% - 1rem);
+                max-height: 50vh;
+                min-height: 200px;
+            }
+
+            .leaderboard h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
             }
 
             .leaderboard li {
+                font-size: 0.85rem;
+                padding: 0.6rem 0.8rem;
+                margin: 0.4rem 0;
+                flex-wrap: wrap;
+            }
+
+            .player-name {
+                font-size: 0.85rem;
+                white-space: normal;
+                word-break: break-word;
+                margin-right: 0.5rem;
+            }
+
+            .rank {
                 font-size: 0.9rem;
-                padding: 0.6rem;
+                margin-right: 0.5rem;
+                min-width: 30px;
+            }
+
+            .player-score {
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+
+            /* Button Group Mobile */
+            .button-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .button-group .btn {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            /* Leaderboard Container Mobile */
+            #leaderboardContainer {
+                width: 100%;
+                margin: 0.5rem 0;
+                padding: 0;
+            }
+
+            #leaderboardContainer .leaderboard {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
             }
         }
 
