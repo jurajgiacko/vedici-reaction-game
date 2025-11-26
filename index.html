@@ -24,7 +24,6 @@
             <p class="tagline">Test your focus. Join the Golden Edge.</p>
             <button class="btn" onclick="startGame()">START CHALLENGE</button>
             <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
-            <button class="btn btn-secondary" onclick="showAnalytics()">📊 ANALYTICS</button>
         </div>
 
         <!-- Game Area -->
@@ -707,7 +706,17 @@
             const analyticsScreen = document.getElementById('analyticsScreen');
             resultsScreen.style.display = 'none';
             analyticsScreen.style.display = 'none';
-            showElement('startScreen');
+            
+            // Check if analytics URL parameter is present
+            const urlParams = new URLSearchParams(window.location.search);
+            const analyticsParam = urlParams.get('analytics');
+            
+            // If analytics parameter is present, show analytics again, otherwise show start screen
+            if (analyticsParam === '1' || analyticsParam === 'true') {
+                showAnalytics();
+            } else {
+                showElement('startScreen');
+            }
             
             // Reset results screen elements
             const h2 = resultsScreen.querySelector('h2');
@@ -729,8 +738,24 @@
             }
         }
 
+        // Check URL parameter for analytics access (internal team only)
+        function checkAnalyticsAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const analyticsParam = urlParams.get('analytics');
+            
+            // Only show analytics if URL parameter is present
+            if (analyticsParam === '1' || analyticsParam === 'true') {
+                // Hide start screen and show analytics directly
+                hideElement('startScreen');
+                showAnalytics();
+            }
+        }
+
         // Keyboard Support for Email Input
         document.addEventListener('DOMContentLoaded', () => {
+            // Check for analytics access on page load
+            checkAnalyticsAccess();
+            
             const emailInput = document.getElementById('playerName');
             
             // Submit on Enter key
