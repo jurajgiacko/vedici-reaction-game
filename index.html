@@ -24,6 +24,7 @@
             <p class="tagline">Test your focus. Join the Golden Edge.</p>
             <button class="btn" onclick="startGame()">START CHALLENGE</button>
             <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
+            <button class="btn btn-secondary" onclick="showAnalytics()">📊 ANALYTICS</button>
         </div>
 
         <!-- Game Area -->
@@ -50,6 +51,51 @@
                 <button class="btn" onclick="saveAndShowLeaderboard()">SAVE SCORE</button>
                 <button class="btn btn-secondary" onclick="startGame()">PLAY AGAIN</button>
                 <button class="btn btn-secondary" onclick="window.open('https://vedici.gg/gameon', '_blank')">GET YOUR EDGE →</button>
+            </div>
+        </div>
+
+        <!-- Analytics Screen -->
+        <div class="analytics-screen" id="analyticsScreen" style="display: none;">
+            <h2>📊 ANALYTICS</h2>
+            <div class="analytics-controls">
+                <div class="date-range-selector">
+                    <label>Select Period:</label>
+                    <select id="periodSelect" onchange="updateAnalytics()">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">Last 7 days</option>
+                        <option value="month">Last 30 days</option>
+                        <option value="all">All time</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="custom-date-range" id="customDateRange" style="display: none;">
+                    <div>
+                        <label>From:</label>
+                        <input type="date" id="dateFrom" onchange="updateAnalytics()">
+                    </div>
+                    <div>
+                        <label>To:</label>
+                        <input type="date" id="dateTo" onchange="updateAnalytics()">
+                    </div>
+                </div>
+            </div>
+            <div class="analytics-stats" id="analyticsStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalGames">0</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgReactionTime">0ms</div>
+                    <div class="stat-label">Avg Reaction Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="uniquePlayers">0</div>
+                    <div class="stat-label">Unique Players</div>
+                </div>
+            </div>
+            <div class="button-group" style="max-width: 300px; margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="backToStart()">BACK</button>
             </div>
         </div>
 
@@ -285,6 +331,39 @@
             loadLeaderboard('leaderboardContainer');
         }
 
+        // Calculate average from leaderboard
+        async function calculateLeaderboardAverage() {
+            if (!firebaseInitialized || !db) {
+                return 0;
+            }
+            
+            try {
+                const snapshot = await db.collection('leaderboard')
+                    .orderBy('score', 'asc')
+                    .limit(100)
+                    .get();
+                
+                if (snapshot.empty) {
+                    return 0;
+                }
+                
+                let total = 0;
+                let count = 0;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.score && typeof data.score === 'number') {
+                        total += data.score;
+                        count++;
+                    }
+                });
+                
+                return count > 0 ? Math.round(total / count) : 0;
+            } catch (error) {
+                console.error('Error calculating leaderboard average:', error);
+                return 0;
+            }
+        }
+
         // Submit Score to Firebase
         async function submitScore() {
             const emailInput = document.getElementById('playerName');
@@ -344,15 +423,19 @@
             submitButton.textContent = 'SAVING...';
             
             try {
+                // Calculate average from current leaderboard before saving
+                const leaderboardAverage = await calculateLeaderboardAverage();
+                
                 // Save to Firebase
                 await db.collection('leaderboard').add({
                     email: playerEmail,
                     score: avgReactionTime,
+                    leaderboardAverage: leaderboardAverage,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     date: new Date().toISOString()
                 });
                 
-                console.log('Score saved successfully');
+                console.log('Score saved successfully with leaderboard average:', leaderboardAverage);
                 closeModal();
                 const resultsScreen = document.getElementById('resultsScreen');
                 resultsScreen.style.display = 'flex';
@@ -399,7 +482,8 @@
         }
 
         // Load Leaderboard
-        async function loadLeaderboard(containerId) {
+        let currentLeaderboardLimit = 10;
+        async function loadLeaderboard(containerId, limit = 10) {
             const container = document.getElementById(containerId);
             
             // Show loading state
@@ -414,7 +498,7 @@
             try {
                 const snapshot = await db.collection('leaderboard')
                     .orderBy('score', 'asc')
-                    .limit(10)
+                    .limit(limit)
                     .get();
                 
                 let html = '<div class="leaderboard"><h2>🏆 ELITE LEADERBOARD</h2><ol>';
@@ -438,8 +522,18 @@
                     html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
                 }
                 
-                html += '</ol></div>';
+                html += '</ol>';
+                
+                // Add "Show More" button if we have less than 100 and there might be more
+                if (limit < 100 && snapshot.size === limit) {
+                    html += `<button class="btn btn-secondary" onclick="loadMoreLeaderboard('${containerId}')" style="margin-top: 1rem; width: 100%;">SHOW MORE (${limit}/100)</button>`;
+                } else if (limit >= 100) {
+                    html += `<div style="text-align: center; color: #888; margin-top: 1rem; font-size: 0.9rem;">Showing all ${rank - 1} records</div>`;
+                }
+                
+                html += '</div>';
                 container.innerHTML = html;
+                currentLeaderboardLimit = limit;
                 
             } catch (error) {
                 console.error('Error loading leaderboard:', error);
@@ -462,9 +556,16 @@
             }
         }
 
+        // Load More Leaderboard
+        async function loadMoreLeaderboard(containerId) {
+            const newLimit = Math.min(currentLeaderboardLimit + 20, 100);
+            await loadLeaderboard(containerId, newLimit);
+        }
+
         // Show Leaderboard from Start Screen
         async function showLeaderboard() {
             hideElement('startScreen');
+            hideElement('analyticsScreen');
             const resultsScreen = document.getElementById('resultsScreen');
             resultsScreen.style.display = 'flex';
             
@@ -481,13 +582,131 @@
             if (rounds) rounds.style.display = 'none';
             if (buttonGroup) buttonGroup.innerHTML = '<button class="btn" onclick="backToStart()">BACK</button>';
             
-            await loadLeaderboard('leaderboardContainer');
+            // Load full leaderboard (100 records) when viewing from start screen
+            await loadLeaderboard('leaderboardContainer', 100);
+        }
+
+        // Show Analytics
+        async function showAnalytics() {
+            hideElement('startScreen');
+            hideElement('resultsScreen');
+            showElement('analyticsScreen');
+            await updateAnalytics();
+        }
+
+        // Update Analytics based on selected period
+        async function updateAnalytics() {
+            if (!firebaseInitialized || !db) {
+                document.getElementById('analyticsStats').innerHTML = '<p style="color: #ff3333; text-align: center;">Firebase not initialized.</p>';
+                return;
+            }
+
+            const periodSelect = document.getElementById('periodSelect');
+            const customDateRange = document.getElementById('customDateRange');
+            const period = periodSelect.value;
+
+            // Show/hide custom date range
+            if (period === 'custom') {
+                customDateRange.style.display = 'flex';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+
+            // Calculate date range (using ISO date strings for filtering)
+            let startDateStr, endDateStr;
+            const now = new Date();
+            now.setHours(23, 59, 59, 999); // End of today
+
+            switch (period) {
+                case 'today':
+                    const today = new Date(now);
+                    today.setHours(0, 0, 0, 0);
+                    startDateStr = today.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    yesterday.setHours(0, 0, 0, 0);
+                    startDateStr = yesterday.toISOString().split('T')[0];
+                    endDateStr = yesterday.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekAgo = new Date(now);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    weekAgo.setHours(0, 0, 0, 0);
+                    startDateStr = weekAgo.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    const monthAgo = new Date(now);
+                    monthAgo.setDate(monthAgo.getDate() - 30);
+                    monthAgo.setHours(0, 0, 0, 0);
+                    startDateStr = monthAgo.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'custom':
+                    const dateFrom = document.getElementById('dateFrom').value;
+                    const dateTo = document.getElementById('dateTo').value;
+                    if (!dateFrom || !dateTo) {
+                        document.getElementById('analyticsStats').innerHTML = '<p style="color: #888; text-align: center;">Please select date range</p>';
+                        return;
+                    }
+                    startDateStr = dateFrom;
+                    endDateStr = dateTo;
+                    break;
+                default: // 'all'
+                    startDateStr = null;
+                    endDateStr = null;
+            }
+
+            try {
+                // Load all records and filter in memory (simpler than complex Firestore queries)
+                const snapshot = await db.collection('leaderboard').get();
+
+                let totalGames = 0;
+                let totalReactionTime = 0;
+                let uniqueEmails = new Set();
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    // Filter by date range if specified
+                    if (startDateStr && endDateStr) {
+                        if (!recordDate || recordDate < startDateStr || recordDate > endDateStr) {
+                            return; // Skip this record
+                        }
+                    }
+                    
+                    totalGames++;
+                    if (data.score && typeof data.score === 'number') {
+                        totalReactionTime += data.score;
+                    }
+                    if (data.email) {
+                        uniqueEmails.add(data.email);
+                    }
+                });
+
+                const avgReactionTime = totalGames > 0 ? Math.round(totalReactionTime / totalGames) : 0;
+
+                // Update UI
+                document.getElementById('totalGames').textContent = totalGames;
+                document.getElementById('avgReactionTime').textContent = avgReactionTime > 0 ? avgReactionTime + 'ms' : 'N/A';
+                document.getElementById('uniquePlayers').textContent = uniqueEmails.size;
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                document.getElementById('analyticsStats').innerHTML = '<p style="color: #ff3333; text-align: center;">Error loading analytics. Please try again.</p>';
+            }
         }
 
         // Back to Start
         function backToStart() {
             const resultsScreen = document.getElementById('resultsScreen');
+            const analyticsScreen = document.getElementById('analyticsScreen');
             resultsScreen.style.display = 'none';
+            analyticsScreen.style.display = 'none';
             showElement('startScreen');
             
             // Reset results screen elements
