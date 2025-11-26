@@ -139,3 +139,5 @@ V **Settings** → **Domains** môžete:
 
 **Poznámka:** Po nastavení domény môže trvať niekoľko minút až hodín, kým bude dostupná. Vercel vám pošle email, keď je doména pripravená.
 
+
+

@@ -73,3 +73,5 @@ Po nastavení pravidiel by mali fungovať:
 - Skontrolujte, či sú Firebase SDK správne načítané
 - Skontrolujte konzolu prehlíadača pre chyby
 
+
+

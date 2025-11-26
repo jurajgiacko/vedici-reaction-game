@@ -135,3 +135,5 @@ V **Settings** → **Git** môžete nastaviť:
 
 **Záver:** Pre váš projekt použite **Production** pre finálnu verziu a **Preview** pre testovanie zmien.
 
+
+

@@ -119,3 +119,5 @@ firebase emulators:start
 
 **Poznámka:** Pre jednoduché statické HTML súbory na Vercel nie je Firebase CLI potrebné.
 
+
+
