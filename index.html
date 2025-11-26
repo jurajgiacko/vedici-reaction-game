@@ -533,9 +533,12 @@
                 // Add date picker
                 html += '<div class="leaderboard-date-picker">';
                 html += '<label for="leaderboardDate">View Top 10 for specific day:</label>';
-                html += '<input type="date" id="leaderboardDate" onchange="loadLeaderboardByDate(\'' + containerId + '\', this.value)">';
+                html += '<div class="date-picker-wrapper">';
+                html += '<input type="date" id="leaderboardDate" value="' + (selectedDate || '') + '">';
+                html += '<button class="btn btn-secondary" onclick="applyDateFilter(\'' + containerId + '\')" style="margin-left: 0.5rem; padding: 0.8rem 1.5rem; font-size: 0.9rem; white-space: nowrap;">Apply</button>';
+                html += '</div>';
                 if (selectedDate) {
-                    html += '<button class="btn btn-secondary" onclick="loadLeaderboardByDate(\'' + containerId + '\', null)" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem;">Show All Time</button>';
+                    html += '<button class="btn btn-secondary" onclick="loadLeaderboardByDate(\'' + containerId + '\', null)" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem; width: 100%;">Show All Time</button>';
                 }
                 html += '</div>';
                 
