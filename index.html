@@ -563,7 +563,7 @@
                     if (selectedDate) {
                         html += '<li style="text-align: center; color: #666;">No scores for this date. Try another day!</li>';
                     } else {
-                        html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
+                    html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
                     }
                 }
                 
@@ -601,6 +601,15 @@
                 errorMsg += '</p>';
                 
                 container.innerHTML = errorMsg;
+            }
+        }
+
+        // Apply Date Filter
+        async function applyDateFilter(containerId) {
+            const dateInput = document.getElementById('leaderboardDate');
+            const selectedDate = dateInput ? dateInput.value : null;
+            if (selectedDate) {
+                await loadLeaderboard(containerId, 10, selectedDate);
             }
         }
 
@@ -773,7 +782,7 @@
             if (analyticsParam === '1' || analyticsParam === 'true') {
                 showAnalytics();
             } else {
-                showElement('startScreen');
+            showElement('startScreen');
             }
             
             // Reset results screen elements
