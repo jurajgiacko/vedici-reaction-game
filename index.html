@@ -482,7 +482,8 @@
 
         // Load Leaderboard
         let currentLeaderboardLimit = 10;
-        async function loadLeaderboard(containerId, limit = 10) {
+        let currentSelectedDate = null;
+        async function loadLeaderboard(containerId, limit = 10, selectedDate = null) {
             const container = document.getElementById(containerId);
             
             // Show loading state
@@ -495,16 +496,54 @@
             }
             
             try {
+                // Load all records and filter by date if specified
                 const snapshot = await db.collection('leaderboard')
                     .orderBy('score', 'asc')
-                    .limit(limit)
                     .get();
                 
-                let html = '<div class="leaderboard"><h2>🏆 ELITE LEADERBOARD</h2><ol>';
-                
-                let rank = 1;
+                // Filter by date if specified
+                let filteredDocs = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    if (selectedDate) {
+                        const recordDate = data.date ? data.date.split('T')[0] : null;
+                        if (recordDate === selectedDate) {
+                            filteredDocs.push({ id: doc.id, data: data });
+                        }
+                    } else {
+                        filteredDocs.push({ id: doc.id, data: data });
+                    }
+                });
+                
+                // Sort by score and limit
+                filteredDocs.sort((a, b) => (a.data.score || 0) - (b.data.score || 0));
+                filteredDocs = filteredDocs.slice(0, limit);
+                
+                const dateDisplay = selectedDate ? new Date(selectedDate).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                }) : 'All Time';
+                
+                let html = '<div class="leaderboard">';
+                html += `<h2>🏆 ${selectedDate ? 'TOP 10' : 'ELITE'} LEADERBOARD</h2>`;
+                html += `<div class="leaderboard-date-info">${selectedDate ? dateDisplay : 'All Time Records'}</div>`;
+                
+                // Add date picker
+                html += '<div class="leaderboard-date-picker">';
+                html += '<label for="leaderboardDate">View Top 10 for specific day:</label>';
+                html += '<input type="date" id="leaderboardDate" onchange="loadLeaderboardByDate(\'' + containerId + '\', this.value)">';
+                if (selectedDate) {
+                    html += '<button class="btn btn-secondary" onclick="loadLeaderboardByDate(\'' + containerId + '\', null)" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem;">Show All Time</button>';
+                }
+                html += '</div>';
+                
+                html += '<ol>';
+                
+                let rank = 1;
+                filteredDocs.forEach(item => {
+                    const data = item.data;
                     const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
                     const displayName = data.email || data.name || 'Anonymous';
                     html += `
@@ -518,21 +557,28 @@
                 });
                 
                 if (rank === 1) {
-                    html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
+                    if (selectedDate) {
+                        html += '<li style="text-align: center; color: #666;">No scores for this date. Try another day!</li>';
+                    } else {
+                        html += '<li style="text-align: center; color: #666;">No scores yet. Be the first!</li>';
+                    }
                 }
                 
                 html += '</ol>';
                 
-                // Add "Show More" button if we have less than 100 and there might be more
-                if (limit < 100 && snapshot.size === limit) {
+                // Add "Show More" button only for all-time leaderboard (not for daily)
+                if (!selectedDate && limit < 100 && filteredDocs.length === limit) {
                     html += `<button class="btn btn-secondary" onclick="loadMoreLeaderboard('${containerId}')" style="margin-top: 1rem; width: 100%;">SHOW MORE (${limit}/100)</button>`;
-                } else if (limit >= 100) {
+                } else if (!selectedDate && limit >= 100) {
                     html += `<div style="text-align: center; color: #888; margin-top: 1rem; font-size: 0.9rem;">Showing all ${rank - 1} records</div>`;
+                } else if (selectedDate && filteredDocs.length === 10) {
+                    html += `<div style="text-align: center; color: #888; margin-top: 1rem; font-size: 0.9rem;">Top 10 for ${dateDisplay}</div>`;
                 }
                 
                 html += '</div>';
                 container.innerHTML = html;
                 currentLeaderboardLimit = limit;
+                currentSelectedDate = selectedDate;
                 
             } catch (error) {
                 console.error('Error loading leaderboard:', error);
@@ -555,10 +601,19 @@
             }
         }
 
+        // Load Leaderboard by Date
+        async function loadLeaderboardByDate(containerId, date) {
+            if (date) {
+                await loadLeaderboard(containerId, 10, date);
+            } else {
+                await loadLeaderboard(containerId, 100);
+            }
+        }
+
         // Load More Leaderboard
         async function loadMoreLeaderboard(containerId) {
             const newLimit = Math.min(currentLeaderboardLimit + 20, 100);
-            await loadLeaderboard(containerId, newLimit);
+            await loadLeaderboard(containerId, newLimit, currentSelectedDate);
         }
 
         // Show Leaderboard from Start Screen
