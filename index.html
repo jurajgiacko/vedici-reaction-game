@@ -337,9 +337,9 @@
             }
             
             try {
-                // Get today at 13:00 as cutoff time
+                // Get today at 8:00 as cutoff time
                 const today = new Date();
-                today.setHours(13, 0, 0, 0);
+                today.setHours(8, 0, 0, 0);
                 const cutoffTimestamp = today.getTime();
                 
                 const snapshot = await db.collection('leaderboard')
@@ -356,7 +356,7 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.score && typeof data.score === 'number') {
-                        // Filter by timestamp - only include records from today 13:00 onwards
+                        // Filter by timestamp - only include records from today 8:00 onwards
                         let recordTimestamp = null;
                         if (data.timestamp) {
                             // Handle Firestore Timestamp object
@@ -518,9 +518,9 @@
             }
             
             try {
-                // Get today at 13:00 as cutoff time (default filter)
+                // Get today at 8:00 as cutoff time (default filter)
                 const today = new Date();
-                today.setHours(13, 0, 0, 0);
+                today.setHours(8, 0, 0, 0);
                 const cutoffTimestamp = today.getTime();
                 
                 // Load all records
@@ -540,7 +540,7 @@
                             filteredDocs.push({ id: doc.id, data: data });
                         }
                     } else {
-                        // Default: show only records from today 13:00 onwards
+                        // Default: show only records from today 8:00 onwards
                         let recordTimestamp = null;
                         if (data.timestamp) {
                             // Handle Firestore Timestamp object
@@ -574,7 +574,7 @@
                 
                 let html = '<div class="leaderboard">';
                 html += `<h2>🏆 ${selectedDate ? 'TOP 10' : 'ELITE'} LEADERBOARD</h2>`;
-                const timeInfo = selectedDate ? dateDisplay : `Records from today 13:00 (${filteredDocs.length} entries)`;
+                const timeInfo = selectedDate ? dateDisplay : `Records from today 8:00 (${filteredDocs.length} entries)`;
                 html += `<div class="leaderboard-date-info">${timeInfo}</div>`;
                 
                 // Add date picker
@@ -774,9 +774,9 @@
             }
 
             try {
-                // Get today at 13:00 as cutoff time
+                // Get today at 8:00 as cutoff time
                 const today = new Date();
-                today.setHours(13, 0, 0, 0);
+                today.setHours(8, 0, 0, 0);
                 const cutoffTimestamp = today.getTime();
                 
                 // Load all records and filter in memory (simpler than complex Firestore queries)
