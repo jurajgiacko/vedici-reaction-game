@@ -337,7 +337,8 @@
             }
             
             try {
-                const snapshot = await db.collection('leaderboard')
+                console.log('Calculating average from collection: leaderboard_v2');
+                const snapshot = await db.collection('leaderboard_v2')
                     .orderBy('score', 'asc')
                     .limit(100)
                     .get();
@@ -426,7 +427,8 @@
                 const leaderboardAverage = await calculateLeaderboardAverage();
                 
                 // Save to Firebase
-                await db.collection('leaderboard').add({
+                console.log('Saving score to collection: leaderboard_v2');
+                await db.collection('leaderboard_v2').add({
                     email: playerEmail,
                     score: avgReactionTime,
                     leaderboardAverage: leaderboardAverage,
@@ -497,14 +499,24 @@
             
             try {
                 // Load all records and filter by date if specified
-                const snapshot = await db.collection('leaderboard')
+                const COLLECTION_NAME = 'leaderboard_v2';
+                console.log('=== LOADING LEADERBOARD ===');
+                console.log('Collection name:', COLLECTION_NAME);
+                console.log('Limit:', limit);
+                console.log('Selected date:', selectedDate);
+                
+                const snapshot = await db.collection(COLLECTION_NAME)
                     .orderBy('score', 'asc')
                     .get();
+                
+                console.log('Total records loaded:', snapshot.size);
+                console.log('Collection path:', snapshot.query._delegate._query.path.segments);
                 
                 // Filter by date if specified
                 let filteredDocs = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    console.log('Record:', { id: doc.id, email: data.email, score: data.score, date: data.date });
                     if (selectedDate) {
                         const recordDate = data.date ? data.date.split('T')[0] : null;
                         if (recordDate === selectedDate) {
@@ -514,6 +526,9 @@
                         filteredDocs.push({ id: doc.id, data: data });
                     }
                 });
+                
+                console.log('Filtered records:', filteredDocs.length);
+                console.log('=== END LOADING LEADERBOARD ===');
                 
                 // Sort by score and limit
                 filteredDocs.sort((a, b) => (a.data.score || 0) - (b.data.score || 0));
@@ -528,6 +543,7 @@
                 
                 let html = '<div class="leaderboard">';
                 html += `<h2>🏆 ${selectedDate ? 'TOP 10' : 'ELITE'} LEADERBOARD</h2>`;
+                html += `<div class="leaderboard-date-info" style="color: #d4af37; font-size: 0.8rem; margin-bottom: 0.5rem;">📊 Using collection: leaderboard_v2 (${filteredDocs.length} records)</div>`;
                 html += `<div class="leaderboard-date-info">${selectedDate ? dateDisplay : 'All Time Records'}</div>`;
                 
                 // Add date picker
@@ -728,7 +744,7 @@
 
             try {
                 // Load all records and filter in memory (simpler than complex Firestore queries)
-                const snapshot = await db.collection('leaderboard').get();
+                const snapshot = await db.collection('leaderboard_v2').get();
 
                 let totalGames = 0;
                 let totalReactionTime = 0;
