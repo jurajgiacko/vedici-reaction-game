@@ -337,8 +337,12 @@
             }
             
             try {
-                console.log('Calculating average from collection: leaderboard_v2');
-                const snapshot = await db.collection('leaderboard_v2')
+                // Get today at 13:00 as cutoff time
+                const today = new Date();
+                today.setHours(13, 0, 0, 0);
+                const cutoffTimestamp = today.getTime();
+                
+                const snapshot = await db.collection('leaderboard')
                     .orderBy('score', 'asc')
                     .limit(100)
                     .get();
@@ -352,8 +356,25 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.score && typeof data.score === 'number') {
-                        total += data.score;
-                        count++;
+                        // Filter by timestamp - only include records from today 13:00 onwards
+                        let recordTimestamp = null;
+                        if (data.timestamp) {
+                            // Handle Firestore Timestamp object
+                            if (data.timestamp.toMillis) {
+                                recordTimestamp = data.timestamp.toMillis();
+                            } else if (data.timestamp.seconds) {
+                                recordTimestamp = data.timestamp.seconds * 1000;
+                            }
+                        }
+                        // Fallback to date field if timestamp not available
+                        if (!recordTimestamp && data.date) {
+                            recordTimestamp = new Date(data.date).getTime();
+                        }
+                        
+                        if (recordTimestamp && recordTimestamp >= cutoffTimestamp) {
+                            total += data.score;
+                            count++;
+                        }
                     }
                 });
                 
@@ -427,8 +448,7 @@
                 const leaderboardAverage = await calculateLeaderboardAverage();
                 
                 // Save to Firebase
-                console.log('Saving score to collection: leaderboard_v2');
-                await db.collection('leaderboard_v2').add({
+                await db.collection('leaderboard').add({
                     email: playerEmail,
                     score: avgReactionTime,
                     leaderboardAverage: leaderboardAverage,
@@ -498,37 +518,48 @@
             }
             
             try {
-                // Load all records and filter by date if specified
-                const COLLECTION_NAME = 'leaderboard_v2';
-                console.log('=== LOADING LEADERBOARD ===');
-                console.log('Collection name:', COLLECTION_NAME);
-                console.log('Limit:', limit);
-                console.log('Selected date:', selectedDate);
+                // Get today at 13:00 as cutoff time (default filter)
+                const today = new Date();
+                today.setHours(13, 0, 0, 0);
+                const cutoffTimestamp = today.getTime();
                 
-                const snapshot = await db.collection(COLLECTION_NAME)
+                // Load all records
+                const snapshot = await db.collection('leaderboard')
                     .orderBy('score', 'asc')
                     .get();
                 
-                console.log('Total records loaded:', snapshot.size);
-                console.log('Collection path:', snapshot.query._delegate._query.path.segments);
-                
-                // Filter by date if specified
+                // Filter records
                 let filteredDocs = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    console.log('Record:', { id: doc.id, email: data.email, score: data.score, date: data.date });
+                    
                     if (selectedDate) {
+                        // If specific date is selected, filter by date
                         const recordDate = data.date ? data.date.split('T')[0] : null;
                         if (recordDate === selectedDate) {
                             filteredDocs.push({ id: doc.id, data: data });
                         }
                     } else {
-                        filteredDocs.push({ id: doc.id, data: data });
+                        // Default: show only records from today 13:00 onwards
+                        let recordTimestamp = null;
+                        if (data.timestamp) {
+                            // Handle Firestore Timestamp object
+                            if (data.timestamp.toMillis) {
+                                recordTimestamp = data.timestamp.toMillis();
+                            } else if (data.timestamp.seconds) {
+                                recordTimestamp = data.timestamp.seconds * 1000;
+                            }
+                        }
+                        // Fallback to date field if timestamp not available
+                        if (!recordTimestamp && data.date) {
+                            recordTimestamp = new Date(data.date).getTime();
+                        }
+                        
+                        if (recordTimestamp && recordTimestamp >= cutoffTimestamp) {
+                            filteredDocs.push({ id: doc.id, data: data });
+                        }
                     }
                 });
-                
-                console.log('Filtered records:', filteredDocs.length);
-                console.log('=== END LOADING LEADERBOARD ===');
                 
                 // Sort by score and limit
                 filteredDocs.sort((a, b) => (a.data.score || 0) - (b.data.score || 0));
@@ -543,8 +574,8 @@
                 
                 let html = '<div class="leaderboard">';
                 html += `<h2>🏆 ${selectedDate ? 'TOP 10' : 'ELITE'} LEADERBOARD</h2>`;
-                html += `<div class="leaderboard-date-info" style="color: #d4af37; font-size: 0.8rem; margin-bottom: 0.5rem;">📊 Using collection: leaderboard_v2 (${filteredDocs.length} records)</div>`;
-                html += `<div class="leaderboard-date-info">${selectedDate ? dateDisplay : 'All Time Records'}</div>`;
+                const timeInfo = selectedDate ? dateDisplay : `Records from today 13:00 (${filteredDocs.length} entries)`;
+                html += `<div class="leaderboard-date-info">${timeInfo}</div>`;
                 
                 // Add date picker
                 html += '<div class="leaderboard-date-picker">';
@@ -743,8 +774,13 @@
             }
 
             try {
+                // Get today at 13:00 as cutoff time
+                const today = new Date();
+                today.setHours(13, 0, 0, 0);
+                const cutoffTimestamp = today.getTime();
+                
                 // Load all records and filter in memory (simpler than complex Firestore queries)
-                const snapshot = await db.collection('leaderboard_v2').get();
+                const snapshot = await db.collection('leaderboard').get();
 
                 let totalGames = 0;
                 let totalReactionTime = 0;
