@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!analytics\\.html|index\\.html|styles\\.css).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
