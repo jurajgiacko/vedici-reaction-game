@@ -282,6 +282,20 @@
             margin: 1rem 0;
         }
 
+        #leaderboardContainer ol {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #leaderboardContainer li {
+            transition: transform 0.2s ease;
+        }
+
+        #leaderboardContainer li:hover {
+            transform: translateX(5px);
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -323,6 +337,20 @@
 
         <div class="warning">
             ⚠️ This is an internal dashboard. Do not share this page publicly.
+        </div>
+
+        <!-- Global Date Selector -->
+        <div class="dashboard-section" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border: 2px solid #d4af37;">
+            <h2 style="margin-bottom: 1rem;">📅 Select Date</h2>
+            <p style="color: #888; margin-bottom: 1.5rem;">
+                Choose a date to filter all analytics, dashboard, and leaderboard data below.
+            </p>
+            <div class="controls" style="max-width: 400px;">
+                <div class="control-group">
+                    <label for="globalDate" style="font-size: 1.1rem; color: #d4af37; font-weight: 700;">Date:</label>
+                    <input type="date" id="globalDate" onchange="applyGlobalDate()" style="font-size: 1.2rem; padding: 1rem;">
+                </div>
+            </div>
         </div>
 
         <!-- Period Analytics Section -->
@@ -432,6 +460,20 @@
             </div>
         </div>
 
+        <!-- Leaderboard Section -->
+        <div class="dashboard-section">
+            <h2>🏆 Top 10 Leaderboard</h2>
+            <p style="color: #888; margin-bottom: 1rem;">
+                Top 10 players for the selected date.
+            </p>
+            <div id="leaderboardContainer">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading leaderboard...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Daily Summary Table -->
         <div class="dashboard-section">
             <h2>Daily Summary</h2>
@@ -474,24 +516,111 @@
                 '<div class="error">Firebase initialization failed. Please refresh the page.</div>';
         }
 
-        // Set today's date as default for daily dashboard
+        // Global date variable
+        let globalSelectedDate = null;
+
+        // Set today's date as default
         document.addEventListener('DOMContentLoaded', () => {
             const today = new Date().toISOString().split('T')[0];
+            document.getElementById('globalDate').value = today;
+            globalSelectedDate = today;
+            
+            // Sync all date inputs
             document.getElementById('dailyDate').value = today;
             document.getElementById('exportDate').value = today;
             
             if (firebaseInitialized) {
-                updateAnalytics();
-                loadDailyDashboard();
+                applyGlobalDate();
                 loadDailySummary();
             }
         });
 
-        // Update Analytics based on selected period
+        // Apply global date to all sections
+        async function applyGlobalDate() {
+            const dateInput = document.getElementById('globalDate');
+            globalSelectedDate = dateInput.value;
+            
+            if (!globalSelectedDate) {
+                return;
+            }
+
+            // Sync all date inputs
+            document.getElementById('dailyDate').value = globalSelectedDate;
+            document.getElementById('exportDate').value = globalSelectedDate;
+
+            // Update all sections
+            await updateAnalyticsForDate(globalSelectedDate);
+            await loadDailyDashboard();
+            await loadLeaderboard();
+        }
+
+        // Update Analytics for specific date (uses global date)
+        async function updateAnalyticsForDate(selectedDate) {
+            if (!firebaseInitialized || !db) {
+                document.getElementById('analyticsStats').innerHTML = 
+                    '<div class="error">Firebase not initialized.</div>';
+                return;
+            }
+
+            if (!selectedDate) {
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+
+                let totalGames = 0;
+                let totalReactionTime = 0;
+                let uniqueEmails = new Set();
+                let bestScore = Infinity;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    // Filter by selected date
+                    if (recordDate !== selectedDate) {
+                        return;
+                    }
+                    
+                    totalGames++;
+                    if (data.score && typeof data.score === 'number') {
+                        totalReactionTime += data.score;
+                        if (data.score < bestScore) {
+                            bestScore = data.score;
+                        }
+                    }
+                    if (data.email) {
+                        uniqueEmails.add(data.email);
+                    }
+                });
+
+                const avgReactionTime = totalGames > 0 ? Math.round(totalReactionTime / totalGames) : 0;
+
+                // Update UI
+                document.getElementById('totalGames').textContent = totalGames;
+                document.getElementById('avgReactionTime').textContent = avgReactionTime > 0 ? avgReactionTime + 'ms' : 'N/A';
+                document.getElementById('uniquePlayers').textContent = uniqueEmails.size;
+                document.getElementById('bestScore').textContent = bestScore !== Infinity ? bestScore + 'ms' : 'N/A';
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                document.getElementById('analyticsStats').innerHTML = 
+                    '<div class="error">Error loading analytics. Please try again.</div>';
+            }
+        }
+
+        // Update Analytics based on selected period (legacy function for period selector)
         async function updateAnalytics() {
             if (!firebaseInitialized || !db) {
                 document.getElementById('analyticsStats').innerHTML = 
                     '<div class="error">Firebase not initialized.</div>';
+                return;
+            }
+
+            // If global date is set, use it instead
+            if (globalSelectedDate) {
+                await updateAnalyticsForDate(globalSelectedDate);
                 return;
             }
 
@@ -604,13 +733,13 @@
             }
         }
 
-        // Load Daily Dashboard
+        // Load Daily Dashboard (uses global date)
         async function loadDailyDashboard() {
             if (!firebaseInitialized || !db) {
                 return;
             }
 
-            const selectedDate = document.getElementById('dailyDate').value;
+            const selectedDate = globalSelectedDate || document.getElementById('dailyDate').value;
             if (!selectedDate) {
                 return;
             }
@@ -650,6 +779,75 @@
 
             } catch (error) {
                 console.error('Error loading daily dashboard:', error);
+            }
+        }
+
+        // Load Leaderboard Top 10 for selected date
+        async function loadLeaderboard() {
+            if (!firebaseInitialized || !db) {
+                document.getElementById('leaderboardContainer').innerHTML = 
+                    '<div class="error">Firebase not initialized.</div>';
+                return;
+            }
+
+            const selectedDate = globalSelectedDate;
+            if (!selectedDate) {
+                document.getElementById('leaderboardContainer').innerHTML = 
+                    '<div class="error">Please select a date first.</div>';
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+
+                // Filter and collect records for selected date
+                const records = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    if (recordDate === selectedDate && data.score && typeof data.score === 'number') {
+                        records.push({
+                            email: data.email || 'Anonymous',
+                            score: data.score
+                        });
+                    }
+                });
+
+                // Sort by score (ascending - lower is better)
+                records.sort((a, b) => a.score - b.score);
+
+                // Take top 10
+                const top10 = records.slice(0, 10);
+
+                // Build HTML
+                let html = '<div style="background: #0a0a0a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333;">';
+                
+                if (top10.length === 0) {
+                    html += '<p style="text-align: center; color: #888; padding: 2rem;">No records found for this date.</p>';
+                } else {
+                    html += '<ol style="list-style: none; padding: 0; margin: 0;">';
+                    top10.forEach((record, index) => {
+                        const rank = index + 1;
+                        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+                        const rankDisplay = medal || `#${rank}`;
+                        
+                        html += `<li style="padding: 1rem; margin: 0.5rem 0; background: ${rank <= 3 ? '#1a1a1a' : '#0a0a0a'}; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: ${rank <= 3 ? '2px solid #d4af37' : '1px solid #333'};">`;
+                        html += `<span style="font-weight: 700; color: ${rank <= 3 ? '#d4af37' : '#fff'}; min-width: 60px;">${rankDisplay}</span>`;
+                        html += `<span style="flex: 1; margin-left: 1rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${record.email}</span>`;
+                        html += `<span style="font-weight: 700; color: #d4af37; margin-left: 1rem;">${record.score}ms</span>`;
+                        html += `</li>`;
+                    });
+                    html += '</ol>';
+                }
+                
+                html += '</div>';
+                document.getElementById('leaderboardContainer').innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById('leaderboardContainer').innerHTML = 
+                    '<div class="error">Error loading leaderboard. Please try again.</div>';
             }
         }
 
@@ -819,9 +1017,9 @@
             }
         }
 
-        // Export daily CSV
+        // Export daily CSV (uses global date)
         async function exportDailyCsv() {
-            const exportDate = document.getElementById('exportDate').value;
+            const exportDate = globalSelectedDate || document.getElementById('exportDate').value;
             if (!exportDate) {
                 showExportStatus('Please select a date', 'error');
                 return;
