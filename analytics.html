@@ -356,26 +356,18 @@
         <!-- Period Analytics Section -->
         <div class="dashboard-section">
             <h2>Period Analytics</h2>
-            
-            <div class="controls">
+            <p style="color: #888; margin-bottom: 1rem;">
+                Summary for the selected date below (same date as in the main selector).
+            </p>
+            <div class="controls" style="max-width: 400px;">
                 <div class="control-group">
-                    <label for="periodSelect">Select Period:</label>
-                    <select id="periodSelect" onchange="updateAnalytics()">
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
-                        <option value="week">Last 7 days</option>
-                        <option value="month">Last 30 days</option>
-                        <option value="all">All time</option>
-                        <option value="custom">Custom Range</option>
-                    </select>
-                </div>
-                <div class="control-group" id="customDateRange" style="display: none;">
-                    <label for="dateFrom">From:</label>
-                    <input type="date" id="dateFrom" onchange="updateAnalytics()">
-                </div>
-                <div class="control-group" id="customDateTo" style="display: none;">
-                    <label for="dateTo">To:</label>
-                    <input type="date" id="dateTo" onchange="updateAnalytics()">
+                    <label for="analyticsDateDisplay">Date:</label>
+                    <input
+                        type="text"
+                        id="analyticsDateDisplay"
+                        readonly
+                        style="padding: 0.8rem; background: #0a0a0a; border: 2px solid #333; color: #fff; border-radius: 4px;"
+                    >
                 </div>
             </div>
 
@@ -547,6 +539,12 @@
             // Sync all date inputs
             document.getElementById('dailyDate').value = globalSelectedDate;
             document.getElementById('exportDate').value = globalSelectedDate;
+
+            // Update period analytics date display
+            const analyticsDateDisplay = document.getElementById('analyticsDateDisplay');
+            if (analyticsDateDisplay) {
+                analyticsDateDisplay.value = globalSelectedDate;
+            }
 
             // Update all sections
             await updateAnalyticsForDate(globalSelectedDate);
