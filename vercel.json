@@ -1,7 +1,8 @@
 {
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!analytics|index\\.html|styles\\.css).*)",
       "destination": "/index.html"
     }
   ],
