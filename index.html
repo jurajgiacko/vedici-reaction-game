@@ -53,51 +53,6 @@
             </div>
         </div>
 
-        <!-- Analytics Screen -->
-        <div class="analytics-screen" id="analyticsScreen" style="display: none;">
-            <h2>📊 ANALYTICS</h2>
-            <div class="analytics-controls">
-                <div class="date-range-selector">
-                    <label>Select Period:</label>
-                    <select id="periodSelect" onchange="updateAnalytics()">
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
-                        <option value="week">Last 7 days</option>
-                        <option value="month">Last 30 days</option>
-                        <option value="all">All time</option>
-                        <option value="custom">Custom Range</option>
-                    </select>
-                </div>
-                <div class="custom-date-range" id="customDateRange" style="display: none;">
-                    <div>
-                        <label>From:</label>
-                        <input type="date" id="dateFrom" onchange="updateAnalytics()">
-                    </div>
-                    <div>
-                        <label>To:</label>
-                        <input type="date" id="dateTo" onchange="updateAnalytics()">
-                    </div>
-                </div>
-            </div>
-            <div class="analytics-stats" id="analyticsStats">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalGames">0</div>
-                    <div class="stat-label">Total Games</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="avgReactionTime">0ms</div>
-                    <div class="stat-label">Avg Reaction Time</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="uniquePlayers">0</div>
-                    <div class="stat-label">Unique Players</div>
-                </div>
-            </div>
-            <div class="button-group" style="max-width: 300px; margin-top: 2rem;">
-                <button class="btn btn-secondary" onclick="backToStart()">BACK</button>
-            </div>
-        </div>
-
         <!-- Email Input Modal -->
         <div class="modal" id="nameModal">
             <div class="modal-content">
@@ -678,7 +633,6 @@
         // Show Leaderboard from Start Screen
         async function showLeaderboard() {
             hideElement('startScreen');
-            hideElement('analyticsScreen');
             const resultsScreen = document.getElementById('resultsScreen');
             resultsScreen.style.display = 'flex';
             
@@ -699,143 +653,11 @@
             await loadLeaderboard('leaderboardContainer', 100);
         }
 
-        // Show Analytics
-        async function showAnalytics() {
-            hideElement('startScreen');
-            hideElement('resultsScreen');
-            showElement('analyticsScreen');
-            await updateAnalytics();
-        }
-
-        // Update Analytics based on selected period
-        async function updateAnalytics() {
-            if (!firebaseInitialized || !db) {
-                document.getElementById('analyticsStats').innerHTML = '<p style="color: #ff3333; text-align: center;">Firebase not initialized.</p>';
-                return;
-            }
-
-            const periodSelect = document.getElementById('periodSelect');
-            const customDateRange = document.getElementById('customDateRange');
-            const period = periodSelect.value;
-
-            // Show/hide custom date range
-            if (period === 'custom') {
-                customDateRange.style.display = 'flex';
-            } else {
-                customDateRange.style.display = 'none';
-            }
-
-            // Calculate date range (using ISO date strings for filtering)
-            let startDateStr, endDateStr;
-            const now = new Date();
-            now.setHours(23, 59, 59, 999); // End of today
-
-            switch (period) {
-                case 'today':
-                    const today = new Date(now);
-                    today.setHours(0, 0, 0, 0);
-                    startDateStr = today.toISOString().split('T')[0];
-                    endDateStr = now.toISOString().split('T')[0];
-                    break;
-                case 'yesterday':
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    yesterday.setHours(0, 0, 0, 0);
-                    startDateStr = yesterday.toISOString().split('T')[0];
-                    endDateStr = yesterday.toISOString().split('T')[0];
-                    break;
-                case 'week':
-                    const weekAgo = new Date(now);
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    weekAgo.setHours(0, 0, 0, 0);
-                    startDateStr = weekAgo.toISOString().split('T')[0];
-                    endDateStr = now.toISOString().split('T')[0];
-                    break;
-                case 'month':
-                    const monthAgo = new Date(now);
-                    monthAgo.setDate(monthAgo.getDate() - 30);
-                    monthAgo.setHours(0, 0, 0, 0);
-                    startDateStr = monthAgo.toISOString().split('T')[0];
-                    endDateStr = now.toISOString().split('T')[0];
-                    break;
-                case 'custom':
-                    const dateFrom = document.getElementById('dateFrom').value;
-                    const dateTo = document.getElementById('dateTo').value;
-                    if (!dateFrom || !dateTo) {
-                        document.getElementById('analyticsStats').innerHTML = '<p style="color: #888; text-align: center;">Please select date range</p>';
-                        return;
-                    }
-                    startDateStr = dateFrom;
-                    endDateStr = dateTo;
-                    break;
-                default: // 'all'
-                    startDateStr = null;
-                    endDateStr = null;
-            }
-
-            try {
-                // Get today at 8:00 as cutoff time
-                const today = new Date();
-                today.setHours(8, 0, 0, 0);
-                const cutoffTimestamp = today.getTime();
-                
-                // Load all records and filter in memory (simpler than complex Firestore queries)
-                const snapshot = await db.collection('leaderboard').get();
-
-                let totalGames = 0;
-                let totalReactionTime = 0;
-                let uniqueEmails = new Set();
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const recordDate = data.date ? data.date.split('T')[0] : null;
-                    
-                    // Filter by date range if specified
-                    if (startDateStr && endDateStr) {
-                        if (!recordDate || recordDate < startDateStr || recordDate > endDateStr) {
-                            return; // Skip this record
-                        }
-                    }
-                    
-                    totalGames++;
-                    if (data.score && typeof data.score === 'number') {
-                        totalReactionTime += data.score;
-                    }
-                    if (data.email) {
-                        uniqueEmails.add(data.email);
-                    }
-                });
-
-                const avgReactionTime = totalGames > 0 ? Math.round(totalReactionTime / totalGames) : 0;
-
-                // Update UI
-                document.getElementById('totalGames').textContent = totalGames;
-                document.getElementById('avgReactionTime').textContent = avgReactionTime > 0 ? avgReactionTime + 'ms' : 'N/A';
-                document.getElementById('uniquePlayers').textContent = uniqueEmails.size;
-
-            } catch (error) {
-                console.error('Error loading analytics:', error);
-                document.getElementById('analyticsStats').innerHTML = '<p style="color: #ff3333; text-align: center;">Error loading analytics. Please try again.</p>';
-            }
-        }
-
         // Back to Start
         function backToStart() {
             const resultsScreen = document.getElementById('resultsScreen');
-            const analyticsScreen = document.getElementById('analyticsScreen');
             resultsScreen.style.display = 'none';
-            analyticsScreen.style.display = 'none';
-            
-            // Check if analytics URL parameter is present
-            const urlParams = new URLSearchParams(window.location.search);
-            const analyticsParam = urlParams.get('analytics');
-            
-            // If analytics parameter is present, show analytics again, otherwise show start screen
-            if (analyticsParam === '1' || analyticsParam === 'true') {
-                showAnalytics();
-            } else {
             showElement('startScreen');
-            }
             
             // Reset results screen elements
             const h2 = resultsScreen.querySelector('h2');
@@ -857,24 +679,8 @@
             }
         }
 
-        // Check URL parameter for analytics access (internal team only)
-        function checkAnalyticsAccess() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const analyticsParam = urlParams.get('analytics');
-            
-            // Only show analytics if URL parameter is present
-            if (analyticsParam === '1' || analyticsParam === 'true') {
-                // Hide start screen and show analytics directly
-                hideElement('startScreen');
-                showAnalytics();
-            }
-        }
-
         // Keyboard Support for Email Input
         document.addEventListener('DOMContentLoaded', () => {
-            // Check for analytics access on page load
-            checkAnalyticsAccess();
-            
             const emailInput = document.getElementById('playerName');
             
             // Submit on Enter key

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEDICI Analytics Dashboard | Internal</title>
+    <meta name="description" content="Internal analytics dashboard for VEDICI Focus Challenge">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #d4af37 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .warning {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #d4af37;
+        }
+
+        .dashboard-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+        }
+
+        .dashboard-section h2 {
+            color: #d4af37;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .control-group select,
+        .control-group input[type="date"] {
+            padding: 0.8rem;
+            font-size: 1rem;
+            background: #0a0a0a;
+            border: 2px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group select:focus,
+        .control-group input[type="date"]:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #d4af37;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .export-section {
+            background: #0a0a0a;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .export-section h3 {
+            color: #d4af37;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .btn-secondary:hover {
+            background: #d4af37;
+            color: #000000;
+        }
+
+        .daily-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background: #0a0a0a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .daily-table th {
+            background: #1a1a1a;
+            color: #d4af37;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #333;
+        }
+
+        .daily-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            color: #fff;
+        }
+
+        .daily-table tr:hover {
+            background: #1a1a1a;
+        }
+
+        .daily-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-radius: 50%;
+            border-top-color: #d4af37;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 51, 51, 0.1);
+            border: 2px solid #ff3333;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #ff3333;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #4caf50;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .daily-table {
+                font-size: 0.85rem;
+            }
+
+            .daily-table th,
+            .daily-table td {
+                padding: 0.7rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 VEDICI Analytics Dashboard</h1>
+            <p>Internal dashboard for analyzing game data and exporting records</p>
+        </div>
+
+        <div class="warning">
+            ⚠️ This is an internal dashboard. Do not share this page publicly.
+        </div>
+
+        <!-- Period Analytics Section -->
+        <div class="dashboard-section">
+            <h2>Period Analytics</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="periodSelect">Select Period:</label>
+                    <select id="periodSelect" onchange="updateAnalytics()">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">Last 7 days</option>
+                        <option value="month">Last 30 days</option>
+                        <option value="all">All time</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="control-group" id="customDateRange" style="display: none;">
+                    <label for="dateFrom">From:</label>
+                    <input type="date" id="dateFrom" onchange="updateAnalytics()">
+                </div>
+                <div class="control-group" id="customDateTo" style="display: none;">
+                    <label for="dateTo">To:</label>
+                    <input type="date" id="dateTo" onchange="updateAnalytics()">
+                </div>
+            </div>
+
+            <div class="stats-grid" id="analyticsStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalGames">0</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgReactionTime">0ms</div>
+                    <div class="stat-label">Avg Reaction Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="uniquePlayers">0</div>
+                    <div class="stat-label">Unique Players</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="bestScore">0ms</div>
+                    <div class="stat-label">Best Score</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Dashboard Section -->
+        <div class="dashboard-section">
+            <h2>Daily Dashboard</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="dailyDate">Select Day:</label>
+                    <input type="date" id="dailyDate" onchange="loadDailyDashboard()">
+                </div>
+            </div>
+
+            <div class="stats-grid" id="dailyStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="dailyGames">0</div>
+                    <div class="stat-label">Games This Day</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="dailyAvgTime">0ms</div>
+                    <div class="stat-label">Avg Reaction Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="dailyUnique">0</div>
+                    <div class="stat-label">Unique Players</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="dailyBest">0ms</div>
+                    <div class="stat-label">Best Score</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="dashboard-section">
+            <h2>Export Data</h2>
+            
+            <div class="export-section">
+                <h3>Export Options</h3>
+                <p style="color: #888; margin-bottom: 1.5rem;">
+                    Export leaderboard data as CSV files. Select a specific day or export all records.
+                </p>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="exportDate">Export Specific Day:</label>
+                        <input type="date" id="exportDate">
+                    </div>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn" onclick="exportDailyCsv()" id="exportDailyBtn">
+                        📥 Download Day CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportAllCsv()" id="exportAllBtn">
+                        📥 Download ALL CSV
+                    </button>
+                </div>
+
+                <div id="exportStatus"></div>
+            </div>
+        </div>
+
+        <!-- Daily Summary Table -->
+        <div class="dashboard-section">
+            <h2>Daily Summary</h2>
+            <p style="color: #888; margin-bottom: 1rem;">
+                Overview of all days with game activity. Click on a date to view details.
+            </p>
+            <div id="dailySummaryTable">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading daily summary...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvMuK_cxGhu-oCIBoYedbN0nB3QkJ5ghQ",
+            authDomain: "vedici-reaction-game.firebaseapp.com",
+            projectId: "vedici-reaction-game",
+            storageBucket: "vedici-reaction-game.firebasestorage.app",
+            messagingSenderId: "368959111382",
+            appId: "1:368959111382:web:d1f7ef0043e223a49cc977"
+        };
+
+        // Initialize Firebase
+        let db;
+        let firebaseInitialized = false;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            firebaseInitialized = true;
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            firebaseInitialized = false;
+            document.getElementById('analyticsStats').innerHTML = 
+                '<div class="error">Firebase initialization failed. Please refresh the page.</div>';
+        }
+
+        // Set today's date as default for daily dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dailyDate').value = today;
+            document.getElementById('exportDate').value = today;
+            
+            if (firebaseInitialized) {
+                updateAnalytics();
+                loadDailyDashboard();
+                loadDailySummary();
+            }
+        });
+
+        // Update Analytics based on selected period
+        async function updateAnalytics() {
+            if (!firebaseInitialized || !db) {
+                document.getElementById('analyticsStats').innerHTML = 
+                    '<div class="error">Firebase not initialized.</div>';
+                return;
+            }
+
+            const periodSelect = document.getElementById('periodSelect');
+            const customDateRange = document.getElementById('customDateRange');
+            const customDateTo = document.getElementById('customDateTo');
+            const period = periodSelect.value;
+
+            // Show/hide custom date range
+            if (period === 'custom') {
+                customDateRange.style.display = 'flex';
+                customDateTo.style.display = 'flex';
+            } else {
+                customDateRange.style.display = 'none';
+                customDateTo.style.display = 'none';
+            }
+
+            // Calculate date range
+            let startDateStr, endDateStr;
+            const now = new Date();
+            now.setHours(23, 59, 59, 999);
+
+            switch (period) {
+                case 'today':
+                    const today = new Date(now);
+                    today.setHours(0, 0, 0, 0);
+                    startDateStr = today.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    yesterday.setHours(0, 0, 0, 0);
+                    startDateStr = yesterday.toISOString().split('T')[0];
+                    endDateStr = yesterday.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekAgo = new Date(now);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    weekAgo.setHours(0, 0, 0, 0);
+                    startDateStr = weekAgo.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    const monthAgo = new Date(now);
+                    monthAgo.setDate(monthAgo.getDate() - 30);
+                    monthAgo.setHours(0, 0, 0, 0);
+                    startDateStr = monthAgo.toISOString().split('T')[0];
+                    endDateStr = now.toISOString().split('T')[0];
+                    break;
+                case 'custom':
+                    const dateFrom = document.getElementById('dateFrom').value;
+                    const dateTo = document.getElementById('dateTo').value;
+                    if (!dateFrom || !dateTo) {
+                        document.getElementById('analyticsStats').innerHTML = 
+                            '<div class="error">Please select date range</div>';
+                        return;
+                    }
+                    startDateStr = dateFrom;
+                    endDateStr = dateTo;
+                    break;
+                default: // 'all'
+                    startDateStr = null;
+                    endDateStr = null;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+
+                let totalGames = 0;
+                let totalReactionTime = 0;
+                let uniqueEmails = new Set();
+                let bestScore = Infinity;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    // Filter by date range if specified
+                    if (startDateStr && endDateStr) {
+                        if (!recordDate || recordDate < startDateStr || recordDate > endDateStr) {
+                            return;
+                        }
+                    }
+                    
+                    totalGames++;
+                    if (data.score && typeof data.score === 'number') {
+                        totalReactionTime += data.score;
+                        if (data.score < bestScore) {
+                            bestScore = data.score;
+                        }
+                    }
+                    if (data.email) {
+                        uniqueEmails.add(data.email);
+                    }
+                });
+
+                const avgReactionTime = totalGames > 0 ? Math.round(totalReactionTime / totalGames) : 0;
+
+                // Update UI
+                document.getElementById('totalGames').textContent = totalGames;
+                document.getElementById('avgReactionTime').textContent = avgReactionTime > 0 ? avgReactionTime + 'ms' : 'N/A';
+                document.getElementById('uniquePlayers').textContent = uniqueEmails.size;
+                document.getElementById('bestScore').textContent = bestScore !== Infinity ? bestScore + 'ms' : 'N/A';
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                document.getElementById('analyticsStats').innerHTML = 
+                    '<div class="error">Error loading analytics. Please try again.</div>';
+            }
+        }
+
+        // Load Daily Dashboard
+        async function loadDailyDashboard() {
+            if (!firebaseInitialized || !db) {
+                return;
+            }
+
+            const selectedDate = document.getElementById('dailyDate').value;
+            if (!selectedDate) {
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+
+                let dailyGames = 0;
+                let dailyTotalTime = 0;
+                let dailyUnique = new Set();
+                let dailyBest = Infinity;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    if (recordDate === selectedDate) {
+                        dailyGames++;
+                        if (data.score && typeof data.score === 'number') {
+                            dailyTotalTime += data.score;
+                            if (data.score < dailyBest) {
+                                dailyBest = data.score;
+                            }
+                        }
+                        if (data.email) {
+                            dailyUnique.add(data.email);
+                        }
+                    }
+                });
+
+                const dailyAvg = dailyGames > 0 ? Math.round(dailyTotalTime / dailyGames) : 0;
+
+                document.getElementById('dailyGames').textContent = dailyGames;
+                document.getElementById('dailyAvgTime').textContent = dailyAvg > 0 ? dailyAvg + 'ms' : 'N/A';
+                document.getElementById('dailyUnique').textContent = dailyUnique.size;
+                document.getElementById('dailyBest').textContent = dailyBest !== Infinity ? dailyBest + 'ms' : 'N/A';
+
+            } catch (error) {
+                console.error('Error loading daily dashboard:', error);
+            }
+        }
+
+        // Load Daily Summary Table
+        async function loadDailySummary() {
+            if (!firebaseInitialized || !db) {
+                document.getElementById('dailySummaryTable').innerHTML = 
+                    '<div class="error">Firebase not initialized.</div>';
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+
+                // Group by date
+                const dailyData = {};
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    if (!recordDate) return;
+                    
+                    if (!dailyData[recordDate]) {
+                        dailyData[recordDate] = {
+                            games: 0,
+                            totalTime: 0,
+                            unique: new Set(),
+                            best: Infinity
+                        };
+                    }
+                    
+                    dailyData[recordDate].games++;
+                    if (data.score && typeof data.score === 'number') {
+                        dailyData[recordDate].totalTime += data.score;
+                        if (data.score < dailyData[recordDate].best) {
+                            dailyData[recordDate].best = data.score;
+                        }
+                    }
+                    if (data.email) {
+                        dailyData[recordDate].unique.add(data.email);
+                    }
+                });
+
+                // Sort dates descending
+                const sortedDates = Object.keys(dailyData).sort((a, b) => b.localeCompare(a));
+
+                // Build table
+                let html = '<table class="daily-table">';
+                html += '<thead><tr>';
+                html += '<th>Date</th>';
+                html += '<th>Games</th>';
+                html += '<th>Avg Time</th>';
+                html += '<th>Unique Players</th>';
+                html += '<th>Best Score</th>';
+                html += '<th>Action</th>';
+                html += '</tr></thead><tbody>';
+
+                if (sortedDates.length === 0) {
+                    html += '<tr><td colspan="6" style="text-align: center; color: #888;">No data available</td></tr>';
+                } else {
+                    sortedDates.forEach(date => {
+                        const data = dailyData[date];
+                        const avg = data.games > 0 ? Math.round(data.totalTime / data.games) : 0;
+                        const best = data.best !== Infinity ? data.best + 'ms' : 'N/A';
+                        
+                        html += '<tr>';
+                        html += `<td>${new Date(date).toLocaleDateString('sk-SK', { year: 'numeric', month: 'long', day: 'numeric' })}</td>`;
+                        html += `<td>${data.games}</td>`;
+                        html += `<td>${avg > 0 ? avg + 'ms' : 'N/A'}</td>`;
+                        html += `<td>${data.unique.size}</td>`;
+                        html += `<td>${best}</td>`;
+                        html += `<td><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="exportDateCsv('${date}')">Export</button></td>`;
+                        html += '</tr>';
+                    });
+                }
+
+                html += '</tbody></table>';
+                document.getElementById('dailySummaryTable').innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading daily summary:', error);
+                document.getElementById('dailySummaryTable').innerHTML = 
+                    '<div class="error">Error loading daily summary. Please try again.</div>';
+            }
+        }
+
+        // Export CSV helper function
+        function buildCsvRow(...values) {
+            return values.map(val => {
+                if (val === null || val === undefined) return '""';
+                const str = String(val);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }).join(',');
+        }
+
+        // Export data for date range
+        async function exportDataForRange(startDateStr, endDateStr, filename) {
+            if (!firebaseInitialized || !db) {
+                showExportStatus('Firebase not initialized', 'error');
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('leaderboard').get();
+                const rows = [];
+
+                // CSV header
+                rows.push(buildCsvRow('Email', 'Score (ms)', 'Date', 'Timestamp'));
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const recordDate = data.date ? data.date.split('T')[0] : null;
+                    
+                    // Filter by date range
+                    if (startDateStr && endDateStr) {
+                        if (!recordDate || recordDate < startDateStr || recordDate > endDateStr) {
+                            return;
+                        }
+                    } else if (startDateStr) {
+                        // Single date
+                        if (recordDate !== startDateStr) {
+                            return;
+                        }
+                    }
+
+                    // Get timestamp
+                    let timestamp = '';
+                    if (data.timestamp) {
+                        if (data.timestamp.toMillis) {
+                            timestamp = new Date(data.timestamp.toMillis()).toISOString();
+                        } else if (data.timestamp.seconds) {
+                            timestamp = new Date(data.timestamp.seconds * 1000).toISOString();
+                        }
+                    } else if (data.date) {
+                        timestamp = data.date;
+                    }
+
+                    rows.push(buildCsvRow(
+                        data.email || '',
+                        data.score || '',
+                        recordDate || '',
+                        timestamp
+                    ));
+                });
+
+                // Create and download CSV
+                const csvContent = rows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showExportStatus(`Successfully exported ${rows.length - 1} records to ${filename}`, 'success');
+
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showExportStatus('Error exporting data: ' + error.message, 'error');
+            }
+        }
+
+        // Export daily CSV
+        async function exportDailyCsv() {
+            const exportDate = document.getElementById('exportDate').value;
+            if (!exportDate) {
+                showExportStatus('Please select a date', 'error');
+                return;
+            }
+
+            const filename = `vedici_focus_${exportDate}.csv`;
+            await exportDataForRange(exportDate, exportDate, filename);
+        }
+
+        // Export all CSV
+        async function exportAllCsv() {
+            const filename = `vedici_focus_all_${new Date().toISOString().split('T')[0]}.csv`;
+            await exportDataForRange(null, null, filename);
+        }
+
+        // Export CSV for specific date (from table)
+        async function exportDateCsv(date) {
+            const filename = `vedici_focus_${date}.csv`;
+            await exportDataForRange(date, date, filename);
+        }
+
+        // Show export status
+        function showExportStatus(message, type) {
+            const statusDiv = document.getElementById('exportStatus');
+            statusDiv.className = type === 'error' ? 'error' : 'success';
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+

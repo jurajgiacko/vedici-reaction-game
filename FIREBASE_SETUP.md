@@ -12,14 +12,31 @@ Pre správne fungovanie aplikácie musíte nastaviť Firestore Security Rules v 
 
 ### Krok 2: Nastavte Security Rules
 
-Skopírujte a vložte tieto pravidlá:
+Skopírujte a vložte tieto pravidlá (obsahujú pravidlá pre obe kolekcie - starú `leaderboard` a novú `leaderboard_v2`):
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Leaderboard collection
+    // Pôvodná leaderboard kolekcia (zachovaná pre históriu)
     match /leaderboard/{document} {
+      // Allow anyone to read leaderboard
+      allow read: if true;
+      
+      // Allow anyone to create new entries
+      allow create: if request.resource.data.keys().hasAll(['email', 'score', 'timestamp', 'date'])
+                    && request.resource.data.email is string
+                    && request.resource.data.score is int
+                    && request.resource.data.email.matches('.*@.*\\..*')
+                    && request.resource.data.score > 0
+                    && request.resource.data.score < 10000;
+      
+      // Prevent updates and deletes (optional - for security)
+      allow update, delete: if false;
+    }
+    
+    // Nová leaderboard_v2 kolekcia (pre nový čistý leaderboard)
+    match /leaderboard_v2/{document} {
       // Allow anyone to read leaderboard
       allow read: if true;
       
@@ -44,7 +61,7 @@ Ak sa zobrazí chyba o chýbajúcom indexe:
 
 1. V Firebase Console → Firestore Database → Indexes
 2. Kliknite na link v chybovej správe alebo vytvorte index manuálne:
-   - Collection: `leaderboard`
+   - Collection: `leaderboard_v2`
    - Fields: `score` (Ascending)
    - Query scope: Collection
 
@@ -72,6 +89,7 @@ Po nastavení pravidiel by mali fungovať:
 ### Chyba: "Firebase not initialized"
 - Skontrolujte, či sú Firebase SDK správne načítané
 - Skontrolujte konzolu prehlíadača pre chyby
+
 
 
 

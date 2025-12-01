@@ -137,3 +137,4 @@ V **Settings** → **Git** môžete nastaviť:
 
 
 
+
